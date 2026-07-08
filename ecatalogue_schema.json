@@ -1,0 +1,2420 @@
+{
+  "id": "emu:/shared/tenants/nwwiim",
+  "version": 1,
+  "data": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "emu:/nwwiim/resources/ecatalogue",
+    "title": "ecatalogue",
+    "type": "object",
+    "properties": {
+      "AccAccessionDateLocal": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "AccAccessionLotLocal": {
+        "type": "string"
+      },
+      "AccAccessionLotRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eaccessionlots/[^/]+$"
+      },
+      "AccAccessionNumberLocal": {
+        "type": "string"
+      },
+      "AcqAccessionNumber": {
+        "type": "string"
+      },
+      "AdmDateInserted": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "AdmDateModified": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "AdmGUIDIsPreferred_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "AdmGUIDIsPreferred": {
+              "type": "string",
+              "$comment": "AdmGUIDIsPreferred_tab"
+            },
+            "AdmGUIDType": {
+              "type": "string",
+              "$comment": "AdmGUIDType_tab"
+            },
+            "AdmGUIDValue": {
+              "type": "string",
+              "$comment": "AdmGUIDValue_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "AdmGUIDPreferredType": {
+        "type": "string"
+      },
+      "AdmGUIDPreferredValue": {
+        "type": "string"
+      },
+      "AdmImportIdentifier": {
+        "type": "string"
+      },
+      "AdmInsertedBy": {
+        "type": "string"
+      },
+      "AdmModifiedBy": {
+        "type": "string"
+      },
+      "AdmOriginalData": {
+        "type": "string"
+      },
+      "AdmPublishWebNoPassword": {
+        "type": "string"
+      },
+      "AdmPublishWebNoPasswordFlag": {
+        "type": "string"
+      },
+      "AdmPublishWebPassword": {
+        "type": "string"
+      },
+      "AdmPublishWebPasswordFlag": {
+        "type": "string"
+      },
+      "AdmSystemIdentifier": {
+        "type": "string"
+      },
+      "AdmTimeInserted": {
+        "type": "string",
+        "format": "partial-time"
+      },
+      "AdmTimeModified": {
+        "type": "string",
+        "format": "partial-time"
+      },
+      "AnnBattleEvent_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "AnnBattleEvent": {
+              "type": "string",
+              "$comment": "AnnBattleEvent_tab"
+            },
+            "AnnBattleEvent_subgrp": {
+              "type": "array",
+              "items": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "AnnLocalTerms": {
+                    "type": "string",
+                    "$comment": "AnnLocalTerms_nesttab"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "AnnDescription": {
+              "type": "string",
+              "$comment": "AnnDescription0, fake"
+            },
+            "AnnEndTime": {
+              "type": "string",
+              "format": "partial-time",
+              "$comment": "AnnEndTime0, fake"
+            },
+            "AnnGeographyRef": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^emu:/nwwiim/ethesaurus/[^/]+$",
+              "$comment": "AnnGeographyRef_tab"
+            },
+            "AnnStartTime": {
+              "type": "string",
+              "format": "partial-time",
+              "$comment": "AnnStartTime0, fake"
+            },
+            "AnnTitle": {
+              "type": "string",
+              "$comment": "AnnTitle_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "AnnBranch_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "AnnEarliestDate0": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "partial-date"
+        }
+      },
+      "AnnEarliestDateQualifier_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "AnnGeographyOLD_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "AnnKeywords_nesttab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AnnLatestDate0": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "partial-date"
+        }
+      },
+      "AnnLatestDateQualifier_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "AnnPerson_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "AnnTGMOLD_nesttab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AnnTGMRef_nesttab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "pattern": "^emu:/nwwiim/ethesaurus/[^/]+$"
+          }
+        }
+      },
+      "AnnTheatre_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "AnnUnit_nesttab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ArchiveSortPosition": {
+        "type": "number"
+      },
+      "ArvArrangement": {
+        "type": "string"
+      },
+      "ArvLinearFeet": {
+        "type": "number"
+      },
+      "ArvMedium_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "ArvNumberOfBoxes": {
+        "type": "string"
+      },
+      "ArvNumberOfFolders": {
+        "type": "string"
+      },
+      "AssIsParent": {
+        "type": "string"
+      },
+      "AssParentObjectRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/ecatalogue/[^/]+$"
+      },
+      "BibBibliography_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "BibBibliographyRef": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^emu:/nwwiim/ebibliography/[^/]+$",
+              "$comment": "BibBibliographyRef_tab"
+            },
+            "BibNotes": {
+              "type": "string",
+              "$comment": "BibNotes_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "CitExternalCitationNotes_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "CitExternalCitationNotes": {
+              "type": "string",
+              "$comment": "CitExternalCitationNotes_tab"
+            },
+            "CitExternalCitations": {
+              "type": "string",
+              "$comment": "CitExternalCitations_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "ColAccessionDate": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "ColBranchOfService_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "ColCollectionTitle": {
+        "type": "string"
+      },
+      "ColCreditLineLocal": {
+        "type": "string"
+      },
+      "ColDateQualifierLatest_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "ColDateQualifier_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "ColDateType_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "ColDateType": {
+              "type": "string",
+              "$comment": "ColDateType_tab"
+            },
+            "ColDisplayDate": {
+              "type": "string",
+              "$comment": "ColDisplayDate_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "ColDescription": {
+        "type": "string"
+      },
+      "ColEarliestDate0": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "partial-date"
+        }
+      },
+      "ColEthnicityLocal": {
+        "type": "string"
+      },
+      "ColGenderLocal": {
+        "type": "string"
+      },
+      "ColHometownLocal": {
+        "type": "string"
+      },
+      "ColLatestDate0": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "partial-date"
+        }
+      },
+      "ColOrganization_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "ColPersonLocal": {
+        "type": "string"
+      },
+      "ColPersonRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+      },
+      "ColPersonStatusLocal": {
+        "type": "string"
+      },
+      "ColProvenance": {
+        "type": "string"
+      },
+      "ColTheatre_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "ColUnit_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "ConAcquisitionInformationRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eaccessionlots/[^/]+$"
+      },
+      "ConArrangementNote": {
+        "type": "string"
+      },
+      "ConCheckedByRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+      },
+      "ConConditionDetails": {
+        "type": "string"
+      },
+      "ConConditionPeriod": {
+        "type": "integer"
+      },
+      "ConConditionPeriodType": {
+        "type": "string"
+      },
+      "ConConditionStatus": {
+        "type": "string"
+      },
+      "ConConditionsofAccess": {
+        "type": "string"
+      },
+      "ConConditionsofUse": {
+        "type": "string"
+      },
+      "ConCopyrightHolder": {
+        "type": "string"
+      },
+      "ConDateChecked": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "ConDispGenHumidity": {
+        "type": "string"
+      },
+      "ConDispGenLight": {
+        "type": "string"
+      },
+      "ConDispGenTemperature": {
+        "type": "string"
+      },
+      "ConDispMaxCelTemperature": {
+        "type": "number"
+      },
+      "ConDispMaxFarTemperature": {
+        "type": "number"
+      },
+      "ConDispMaxHumidity": {
+        "type": "number"
+      },
+      "ConDispMaxLight": {
+        "type": "number"
+      },
+      "ConDispMinCelTemperature": {
+        "type": "number"
+      },
+      "ConDispMinFarTemperature": {
+        "type": "number"
+      },
+      "ConDispMinHumidity": {
+        "type": "number"
+      },
+      "ConDispMinLight": {
+        "type": "number"
+      },
+      "ConDispOtherInstructions": {
+        "type": "string"
+      },
+      "ConHandlingInstructions": {
+        "type": "string"
+      },
+      "ConLocationOfCopiesRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/elocations/[^/]+$"
+      },
+      "ConLocationOfOriginalsRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/elocations/[^/]+$"
+      },
+      "ConNextCheck": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "ConPhysicalAccess": {
+        "type": "string"
+      },
+      "ConProcessingHistory": {
+        "type": "string"
+      },
+      "ConProcessingNote": {
+        "type": "string"
+      },
+      "ConPublicationNote": {
+        "type": "string"
+      },
+      "ConRelatedUnitsRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/ecatalogue/[^/]+$"
+      },
+      "ConRelatedWebsites": {
+        "type": "string"
+      },
+      "ConStorGenHumidity": {
+        "type": "string"
+      },
+      "ConStorGenLight": {
+        "type": "string"
+      },
+      "ConStorGenTemperature": {
+        "type": "string"
+      },
+      "ConStorMaxCelTemperature": {
+        "type": "number"
+      },
+      "ConStorMaxFarTemperature": {
+        "type": "number"
+      },
+      "ConStorMaxHumidity": {
+        "type": "number"
+      },
+      "ConStorMaxLight": {
+        "type": "number"
+      },
+      "ConStorMinCelTemperature": {
+        "type": "number"
+      },
+      "ConStorMinFarTemperature": {
+        "type": "number"
+      },
+      "ConStorMinHumidity": {
+        "type": "number"
+      },
+      "ConStorMinLight": {
+        "type": "number"
+      },
+      "ConStorOtherInstructions": {
+        "type": "string"
+      },
+      "ConTechnicalAccessRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/erights/[^/]+$"
+      },
+      "CraCrateNumber": {
+        "type": "string"
+      },
+      "CraCrateType": {
+        "type": "string"
+      },
+      "CraExternalHeight": {
+        "type": "number"
+      },
+      "CraExternalLength": {
+        "type": "number"
+      },
+      "CraExternalWidth": {
+        "type": "number"
+      },
+      "CraNoOfSlots": {
+        "type": "string"
+      },
+      "CraObjectsRef_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri",
+          "pattern": "^emu:/nwwiim/ecatalogue/[^/]+$"
+        }
+      },
+      "CraOrientation": {
+        "type": "string"
+      },
+      "CraSlotHeight": {
+        "type": "number"
+      },
+      "CraSlotLength": {
+        "type": "number"
+      },
+      "CraSlotWidth": {
+        "type": "number"
+      },
+      "CraTotalNoOfTrays": {
+        "type": "string"
+      },
+      "CraTrayHeight_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "CraTrayHeight": {
+              "type": "number",
+              "$comment": "CraTrayHeight_tab"
+            },
+            "CraTrayLength": {
+              "type": "number",
+              "$comment": "CraTrayLength_tab"
+            },
+            "CraTrayRemarks": {
+              "type": "string",
+              "$comment": "CraTrayRemarks_tab"
+            },
+            "CraTrayWidth": {
+              "type": "number",
+              "$comment": "CraTrayWidth_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "DatFirstDateQualifier": {
+        "type": "string"
+      },
+      "DatFirstDateQualifierLatest": {
+        "type": "string"
+      },
+      "DatFirstDisplayDate": {
+        "type": "string"
+      },
+      "DatFirstEarliestDate": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "DatFirstLatestDate": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "DeaAuthorisedByRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+      },
+      "DeaDateAuthorised": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "DeaDeaccessionDate": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "DeaDeaccessionMethod": {
+        "type": "string"
+      },
+      "DeaDeaccessionNotes": {
+        "type": "string"
+      },
+      "DeaMeetingDate": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "DeaMeetingTitle": {
+        "type": "string"
+      },
+      "DeaReceivingPartyRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+      },
+      "DeaTransferDate": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "DeaTransferNotes": {
+        "type": "string"
+      },
+      "DeaTransferOfTitle": {
+        "type": "string"
+      },
+      "DigCreditLine": {
+        "type": "string"
+      },
+      "DigIDNumber": {
+        "type": "string"
+      },
+      "DigOriginalOwnerRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+      },
+      "DimDepthImp_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "DimDepthImp": {
+              "type": "number",
+              "$comment": "DimDepthImp_tab"
+            },
+            "DimDepthMet": {
+              "type": "number",
+              "$comment": "DimDepthMet_tab"
+            },
+            "DimDiameterImp": {
+              "type": "number",
+              "$comment": "DimDiameterImp_tab"
+            },
+            "DimDiameterMet": {
+              "type": "number",
+              "$comment": "DimDiameterMet_tab"
+            },
+            "DimDimensionType": {
+              "type": "string",
+              "$comment": "DimDimensionType_tab"
+            },
+            "DimHeightImp": {
+              "type": "number",
+              "$comment": "DimHeightImp_tab"
+            },
+            "DimHeightMet": {
+              "type": "number",
+              "$comment": "DimHeightMet_tab"
+            },
+            "DimWeightImp": {
+              "type": "number",
+              "$comment": "DimWeightImp_tab"
+            },
+            "DimWeightMet": {
+              "type": "number",
+              "$comment": "DimWeightMet_tab"
+            },
+            "DimWidthImp": {
+              "type": "number",
+              "$comment": "DimWidthImp_tab"
+            },
+            "DimWidthMet": {
+              "type": "number",
+              "$comment": "DimWidthMet_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "DisDurationofDisplay": {
+        "type": "string"
+      },
+      "DocContainer_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "DocCreatorRef_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri",
+          "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+        }
+      },
+      "DocNumber": {
+        "type": "string"
+      },
+      "DocPreferredCitation": {
+        "type": "string"
+      },
+      "DocQuantity_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "DocVolume": {
+        "type": "string"
+      },
+      "EADAbstract": {
+        "type": "string"
+      },
+      "EADAccessRestrictions": {
+        "type": "string"
+      },
+      "EADAccruals": {
+        "type": "string"
+      },
+      "EADAcquisitionInformationRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eaccessionlots/[^/]+$"
+      },
+      "EADAlternativeFormAvailable": {
+        "type": "string"
+      },
+      "EADAppraisalInformation": {
+        "type": "string"
+      },
+      "EADArrangement": {
+        "type": "string"
+      },
+      "EADAuthorOfFindingAidRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+      },
+      "EADBibliographyRef_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri",
+          "pattern": "^emu:/nwwiim/ebibliography/[^/]+$"
+        }
+      },
+      "EADBiographyOrHistory": {
+        "type": "string"
+      },
+      "EADComponentLevel": {
+        "type": "string"
+      },
+      "EADCorporateName_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "EADCreation": {
+        "type": "string"
+      },
+      "EADCustodialHistory": {
+        "type": "string"
+      },
+      "EADDescriptiveRules": {
+        "type": "string"
+      },
+      "EADDimensions": {
+        "type": "string"
+      },
+      "EADEditionStatement": {
+        "type": "string"
+      },
+      "EADExtent_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "EADFamilyName_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "EADFilePlan": {
+        "type": "string"
+      },
+      "EADFunction_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "EADGenreForm_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "EADGeographicName_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "EADIdentifier": {
+        "type": "string"
+      },
+      "EADIndex": {
+        "type": "string"
+      },
+      "EADLanguageCodeOfFindingAid": {
+        "type": "string"
+      },
+      "EADLanguageCodeOfMaterial_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "EADLanguageCodeOfMaterial": {
+              "type": "string",
+              "$comment": "EADLanguageCodeOfMaterial_tab"
+            },
+            "EADLanguageOfMaterial": {
+              "type": "string",
+              "$comment": "EADLanguageOfMaterial_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "EADLanguageOfFindingAid": {
+        "type": "string"
+      },
+      "EADLevelAttribute": {
+        "type": "string"
+      },
+      "EADLocationOfOriginals": {
+        "type": "string"
+      },
+      "EADMaterialSpecificDetail": {
+        "type": "string"
+      },
+      "EADName_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "EADNote": {
+        "type": "string"
+      },
+      "EADNoteStatement": {
+        "type": "string"
+      },
+      "EADOccupation_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "EADOriginationRef_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri",
+          "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+        }
+      },
+      "EADOtherDescriptiveData": {
+        "type": "string"
+      },
+      "EADOtherFindingAid": {
+        "type": "string"
+      },
+      "EADOtherName_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "EADPersonalName_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "EADPhysicalDescription_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "EADPhysicalFacet": {
+        "type": "string"
+      },
+      "EADPhysicalTechnical": {
+        "type": "string"
+      },
+      "EADPreferredCitation": {
+        "type": "string"
+      },
+      "EADPreviousID_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "EADProcessingInformation": {
+        "type": "string"
+      },
+      "EADPublicationStatement": {
+        "type": "string"
+      },
+      "EADRelatedMaterial": {
+        "type": "string"
+      },
+      "EADRepositoryRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+      },
+      "EADRevision": {
+        "type": "string"
+      },
+      "EADRevisionByRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+      },
+      "EADRevisionDate": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "EADScopeAndContent": {
+        "type": "string"
+      },
+      "EADSeparatedMaterial": {
+        "type": "string"
+      },
+      "EADSource": {
+        "type": "string"
+      },
+      "EADSponsorRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+      },
+      "EADSubject_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "EADSubtitle": {
+        "type": "string"
+      },
+      "EADTitleProper": {
+        "type": "string"
+      },
+      "EADTitle_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "EADUnitDate": {
+        "type": "string"
+      },
+      "EADUnitDateEarliest": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "EADUnitDateEarliestOrig": {
+        "type": "integer"
+      },
+      "EADUnitDateLatest": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "EADUnitDateLatestOrig": {
+        "type": "integer"
+      },
+      "EADUnitID": {
+        "type": "string"
+      },
+      "EADUnitTitle": {
+        "type": "string"
+      },
+      "EADUseRestrictions": {
+        "type": "string"
+      },
+      "EduIDNumber": {
+        "type": "string"
+      },
+      "ExhExhibitionHistory": {
+        "type": "string"
+      },
+      "ExhExhibitionHistoryNotes": {
+        "type": "string"
+      },
+      "ExtFileName_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "ExtFileName": {
+              "type": "string",
+              "$comment": "ExtFileName_tab"
+            },
+            "ExtVideoLength": {
+              "type": "string",
+              "$comment": "ExtVideoLength_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "ExtFileSizeType_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "ExtFileSize_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "ExtFormat_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "ExtFormat": {
+              "type": "string",
+              "$comment": "ExtFormat_tab"
+            },
+            "ExtQuantity": {
+              "type": "string",
+              "$comment": "ExtQuantity_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "ExtInterviewSummary": {
+        "type": "string"
+      },
+      "ExtUnit_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "ExtendedData": {
+        "type": "string"
+      },
+      "FinEADUrl_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "FinFindingAidType_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "FinLanguage_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "FinNote_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "FinOriginalHolderRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+      },
+      "FinProvenance": {
+        "type": "string"
+      },
+      "FraAssociatedWorkRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/ecatalogue/[^/]+$"
+      },
+      "FraExternalDepth": {
+        "type": "number"
+      },
+      "FraExternalHeight": {
+        "type": "number"
+      },
+      "FraExternalWidth": {
+        "type": "number"
+      },
+      "FraFrameDescription": {
+        "type": "string"
+      },
+      "FraFrameNumber": {
+        "type": "string"
+      },
+      "FraFrameType": {
+        "type": "string"
+      },
+      "FraInternalDepth": {
+        "type": "number"
+      },
+      "FraInternalHeight": {
+        "type": "number"
+      },
+      "FraInternalWidth": {
+        "type": "number"
+      },
+      "FraObjectsRef_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri",
+          "pattern": "^emu:/nwwiim/ecatalogue/[^/]+$"
+        }
+      },
+      "HisEarliestDate": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "HisIsAudio": {
+        "type": "string"
+      },
+      "HisIsDigitized": {
+        "type": "string"
+      },
+      "HisIsTranscribed": {
+        "type": "string"
+      },
+      "HisIsVideo": {
+        "type": "string"
+      },
+      "HisLatestDate": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "HisProvenance": {
+        "type": "string"
+      },
+      "ImgColor": {
+        "type": "string"
+      },
+      "ImgContentDescription": {
+        "type": "string"
+      },
+      "ImgDate": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "ImgDateQualifier": {
+        "type": "string"
+      },
+      "ImgHeight": {
+        "type": "number"
+      },
+      "ImgImageType": {
+        "type": "string"
+      },
+      "ImgPhotographerRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+      },
+      "ImgTitle": {
+        "type": "string"
+      },
+      "ImgVerbatimDate": {
+        "type": "string"
+      },
+      "ImgWidth": {
+        "type": "number"
+      },
+      "InsInscriptions": {
+        "type": "string"
+      },
+      "InsInsuranceRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/einsurance/[^/]+$"
+      },
+      "InsMarkings": {
+        "type": "string"
+      },
+      "InsSignature": {
+        "type": "string"
+      },
+      "IntInterviewDate0": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "partial-date"
+        }
+      },
+      "IntInterviewLanguage_nesttab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "IntInterviewLocation_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "IntInterviewNotes_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "IntInterviewee_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "IntIntervieweeRef": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^emu:/nwwiim/eparties/[^/]+$",
+              "$comment": "IntIntervieweeRef_tab"
+            },
+            "IntInterviewerRef": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^emu:/nwwiim/eparties/[^/]+$",
+              "$comment": "IntInterviewerRef_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "InvInventoriedBy_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "InvInventoriedByRef": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^emu:/nwwiim/eparties/[^/]+$",
+              "$comment": "InvInventoriedByRef_tab"
+            },
+            "InvInventoryDate": {
+              "type": "string",
+              "format": "partial-date",
+              "$comment": "InvInventoryDate0, fake"
+            },
+            "InvInventoryStatus": {
+              "type": "string",
+              "$comment": "InvInventoryStatus_tab"
+            },
+            "InvPhysicalInventory": {
+              "type": "string",
+              "$comment": "InvPhysicalInventory_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "InvInventoriedNotes0": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "InvInventoryType_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "InvPhotographed_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "LocAcceptedByRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+      },
+      "LocCurrentLocationRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/elocations/[^/]+$"
+      },
+      "LocDateMoved": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "LocIndependentlyMoveable": {
+        "type": "string"
+      },
+      "LocMovementNotes": {
+        "type": "string"
+      },
+      "LocPermanentLocationRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/elocations/[^/]+$"
+      },
+      "LocReleasedByRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+      },
+      "LocRequestedByRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+      },
+      "LocTemporaryLocationRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/elocations/[^/]+$"
+      },
+      "LocTimeMoved": {
+        "type": "string",
+        "format": "partial-time"
+      },
+      "MatMaterialComponent_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "MatMaterial": {
+              "type": "string",
+              "$comment": "MatMaterial_tab"
+            },
+            "MatMaterialComponent": {
+              "type": "string",
+              "$comment": "MatMaterialComponent_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "MatPhysicalComponent_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "MatPhysicalComponent": {
+              "type": "string",
+              "$comment": "MatPhysicalComponent_tab"
+            },
+            "MatPhysicalDescription": {
+              "type": "string",
+              "$comment": "MatPhysicalDescription_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "MulHasMultiMedia": {
+        "type": "string"
+      },
+      "MulMultiMediaRef_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri",
+          "pattern": "^emu:/nwwiim/emultimedia/[^/]+$"
+        }
+      },
+      "NotNotes": {
+        "type": "string"
+      },
+      "NteAttributedToRef_nesttab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+          }
+        }
+      },
+      "NteBibliographyRef_nesttab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      },
+      "NteDate_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "NteDate": {
+              "type": "string",
+              "format": "partial-date",
+              "$comment": "NteDate0, fake"
+            },
+            "NteText": {
+              "type": "string",
+              "$comment": "NteText0, fake"
+            },
+            "NteType": {
+              "type": "string",
+              "$comment": "NteType_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "Obj1ObjectType_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "ObjBriefSummary": {
+        "type": "string"
+      },
+      "ObjCatalogStatus": {
+        "type": "string"
+      },
+      "ObjCollectionStatus": {
+        "type": "string"
+      },
+      "ObjLanguage_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "ObjObjectName": {
+        "type": "string"
+      },
+      "ObjObjectParts": {
+        "type": "integer"
+      },
+      "ObjObjectStatus": {
+        "type": "string"
+      },
+      "ObjRecordType": {
+        "type": "string"
+      },
+      "ObjWebDescription": {
+        "type": "string"
+      },
+      "PhoHometown": {
+        "type": "string"
+      },
+      "ScoArrangement": {
+        "type": "string"
+      },
+      "ScoHistoricalNotes": {
+        "type": "string"
+      },
+      "ScoNotes": {
+        "type": "string"
+      },
+      "ScoScopeandContent": {
+        "type": "string"
+      },
+      "SecCanDelete_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "SecCanDisplay_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "SecCanEdit_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "SecDepartment_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "SecRecordStatus": {
+        "type": "string"
+      },
+      "SubBattleEventSort_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "SubBattleEvent_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "SubBattleEvent": {
+              "type": "string",
+              "$comment": "SubBattleEvent_tab"
+            },
+            "SubEventType": {
+              "type": "string",
+              "$comment": "SubEventType_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "SubCorporate_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "SubGenreFormOLD_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "SubGenreFormRef_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri",
+          "pattern": "^emu:/nwwiim/ethesaurus/[^/]+$"
+        }
+      },
+      "SubGeographicNameOLD_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "SubGeographicName_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "SubGeographicNameRef": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^emu:/nwwiim/ethesaurus/[^/]+$",
+              "$comment": "SubGeographicNameRef_tab"
+            },
+            "SubGeographyPlaceName": {
+              "type": "string",
+              "$comment": "SubGeographyPlaceName_tab"
+            },
+            "SubGeographyRole": {
+              "type": "string",
+              "$comment": "SubGeographyRole_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "SubGeographyOLD_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "SubGeographyRef_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri",
+          "pattern": "^emu:/nwwiim/ethesaurus/[^/]+$"
+        }
+      },
+      "SubLocalTerms_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "SubPerson_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "SubTopicalSubject_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "SummaryData": {
+        "type": "string"
+      },
+      "TasCommenceNotifyOffset_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "TasCommenceNotifyRef_nesttab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+          }
+        }
+      },
+      "TasCommencementDate_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "TasCommencementDate": {
+              "type": "string",
+              "format": "partial-date",
+              "$comment": "TasCommencementDate0, fake"
+            },
+            "TasCompleted": {
+              "type": "string",
+              "$comment": "TasCompleted_tab"
+            },
+            "TasCompletionDate": {
+              "type": "string",
+              "format": "partial-date",
+              "$comment": "TasCompletionDate0, fake"
+            },
+            "TasDescription": {
+              "type": "string",
+              "$comment": "TasDescription_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "TasCompletionNotifyOffset_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "TasCompletionNotifyRef_nesttab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+          }
+        }
+      },
+      "TasDependOnCompletionOffset_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "TasDependOnPosition_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "TasDependOnTask_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "TasEndNotifyDate0": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "partial-date"
+        }
+      },
+      "TasPersonAssignedToRef_nesttab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+          }
+        }
+      },
+      "TasResults_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "TasStartNotifyDate0": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "partial-date"
+        }
+      },
+      "TasTaskAssignerRef_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri",
+          "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+        }
+      },
+      "TasTaskDuration_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "TasTimeTakenOnTask_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "TitTitleType_grp": {
+        "type": "array",
+        "items": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "TitTitle": {
+              "type": "string",
+              "$comment": "TitTitle_tab"
+            },
+            "TitTitleType": {
+              "type": "string",
+              "$comment": "TitTitleType_tab"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "ValDateValued": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "ValNextDue": {
+        "type": "string",
+        "format": "partial-date"
+      },
+      "ValReasonForValuation": {
+        "type": "string"
+      },
+      "ValValuationAmount": {
+        "type": "number"
+      },
+      "ValValuationNotes": {
+        "type": "string"
+      },
+      "ValValuationPeriod": {
+        "type": "integer"
+      },
+      "ValValuationPeriodType": {
+        "type": "string"
+      },
+      "ValValuedByRef": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/eparties/[^/]+$"
+      },
+      "VidContentRating": {
+        "type": "string"
+      },
+      "VidMediaQuality": {
+        "type": "string"
+      },
+      "VidOverallPlayingTime": {
+        "type": "number"
+      },
+      "VidSignedRelease": {
+        "type": "string"
+      },
+      "WebAccessionNumber": {
+        "type": "string"
+      },
+      "WebAssetURL_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "WebBattleEvent_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "WebBranch_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "WebCollectionDescription": {
+        "type": "string"
+      },
+      "WebCreditLine": {
+        "type": "string"
+      },
+      "WebDates_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "WebDescription": {
+        "type": "string"
+      },
+      "WebDonorName": {
+        "type": "string"
+      },
+      "WebGeography_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "WebHometown": {
+        "type": "string"
+      },
+      "WebLocalTerms_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "WebObjectType_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "WebOrganization_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "WebPOWKIA": {
+        "type": "string"
+      },
+      "WebPerson_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "WebSeriesNumber": {
+        "type": "string"
+      },
+      "WebTGM_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "WebTheatre_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "WebTitle": {
+        "type": "string"
+      },
+      "WebUnit_tab": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "irn": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^emu:/nwwiim/ecatalogue/[^/]+$"
+      }
+    },
+    "additionalProperties": false
+  },
+  "@namespaces": {
+    "emu": {
+      "name": "http://axiell.com/emu#"
+    }
+  },
+  "@meta": {
+    "@title": "Schemas resource",
+    "@description": "A schema defines the acceptable JSON structure for a given record type. When a new record is added or an existign record updated it must first pass validation against the schema to ensure it conforms to what is an acceptable record. The schema conforms to JSON Schema Draft #7.",
+    "@controls": {
+      "help": {
+        "title": "API Documentation",
+        "description": "Displays the home page of the TexRestAPI documentation. The documentation contains indepth descriptions of the resources available along with the endpoints used to manipulate those resources.",
+        "href": "http://fe80::250:56ff:fead:a594:8084/help/index.html"
+      }
+    }
+  },
+  "@controls": {
+    "self": {
+      "href": "http://fe80::250:56ff:fead:a594:8084/shared/tenants/nwwiim",
+      "title": "Schema details",
+      "description": "A JSON Schema Draft #7 compliant description of the acceptable JSON structure for the given record type."
+    },
+    "start": {
+      "method": "GET",
+      "href": "http://fe80::250:56ff:fead:a594:8084/",
+      "title": "Home page",
+      "description": "The home page displays a list of all registered tenants. Once a tenant is selected access to its resources is available"
+    },
+    "search": {
+      "method": "GET",
+      "href": "http://fe80::250:56ff:fead:a594:8084/shared/tenants",
+      "title": "Retrieve all schemas",
+      "description": "Retrieves all schemas defined for use by the supplied tenant. The schemas include system level types like users, roles, tenants and tokens as well as tenant specific types."
+    },
+    "emu:update": {
+      "method": "PATCH",
+      "href": "http://fe80::250:56ff:fead:a594:8084/shared/tenants/nwwiim",
+      "encoding": "json",
+      "schemaUrl": "http://json.schemastore.org/json-patch",
+      "title": "Reload schema",
+      "description": "Reloads the schema with an updated version. When a schema is first referenced it is read into a cache and used for future requests. If the underlying EMu server is updated a nwere version of the schema may be available. The update method removes the scehma from the cache forcing the new version to be loaded when next required."
+    },
+    "emu:update-all": {
+      "method": "PATCH",
+      "href": "http://fe80::250:56ff:fead:a594:8084/shared/tenants",
+      "encoding": "json",
+      "schemaUrl": "http://json.schemastore.org/json-patch",
+      "title": "Reload all schemas",
+      "description": "Forces a reload of all schemas for the current tenant. A full reload is generally required when the EMu system is updated to ensure the latest version of the schemas is available."
+    }
+  }
+}

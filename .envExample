@@ -1,0 +1,8 @@
+EMU_HOST=
+EMU_PORT=8084
+EMU_TENANT=emutest
+EMU_USERNAME=your_emu_username
+EMU_PASSWORD=your_emu_password
+
+# NOTE: raw IPv6 used temporarily — DNS A record for
+# prodesx02.ddaymuseum.org is stale, revisit later
