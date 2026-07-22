@@ -14,7 +14,7 @@ EMU_TENANT = os.getenv("EMU_TENANT")       # e.g. "emutest" — CONFIRM against 
 EMU_USERNAME = os.getenv("EMU_USERNAME")
 EMU_PASSWORD = os.getenv("EMU_PASSWORD")
 
-EMU_BASE_URL = f"http://[{EMU_HOST}]:{EMU_PORT}"
+EMU_BASE_URL = f"http://{EMU_HOST}:{EMU_PORT}"
 TOKEN_URL = f"{EMU_BASE_URL}/{EMU_TENANT}/tokens"
 
 payload = {
