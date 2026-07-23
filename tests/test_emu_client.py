@@ -25,7 +25,7 @@ def test_single_page(mock_get, mock_auth):
 
     kwargs = mock_get.call_args.kwargs
     assert kwargs["headers"] == {"Authorization": "Bearer fake-token"}
-    assert kwargs["params"]["select"] == ";".join(emu_client.PLACEHOLDER_FIELDS)
+    assert kwargs["params"]["select"] == ",".join(emu_client.PLACEHOLDER_FIELDS)
     assert "2026-01-01" in kwargs["params"]["filter"]
 
 
@@ -51,7 +51,7 @@ def test_pagination_follows_next_search(mock_get, mock_auth):
 
 @patch("middleware.emu_client.get_auth_headers", return_value={"Authorization": "Bearer fake-token"})
 @patch("middleware.emu_client.requests.get")
-def test_custom_fields_joined_with_semicolon(mock_get, mock_auth):
+def test_custom_fields_joined_with_comma(mock_get, mock_auth):
     mock_get.return_value = make_response(matches=[])
 
     emu_client.search_modified_since(
@@ -59,4 +59,4 @@ def test_custom_fields_joined_with_semicolon(mock_get, mock_auth):
     )
 
     kwargs = mock_get.call_args.kwargs
-    assert kwargs["params"]["select"] == "data.irn;data.WebTitle"
+    assert kwargs["params"]["select"] == "data.irn,data.WebTitle"

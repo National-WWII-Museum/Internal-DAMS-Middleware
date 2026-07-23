@@ -38,7 +38,7 @@ def search_modified_since(module, since_date, fields=None, page_size=500, timeou
         fields = PLACEHOLDER_FIELDS
 
     headers = get_auth_headers(timeout=timeout)
-    select_str = ";".join(fields)
+    select_str = ",".join(fields)
 
     filter_query = {
         "AND": [
