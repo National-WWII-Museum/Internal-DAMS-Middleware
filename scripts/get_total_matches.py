@@ -5,28 +5,16 @@ minimal 'select' (just irn) and a large limit, since this emurestapi
 build does not return a 'hits' field. Does not store or process full
 record data - just tallies how many matches come back per page.
 """
-import os
-from dotenv import load_dotenv
 import requests
 import json
 
-load_dotenv()
-EMU_HOST = os.getenv("EMU_HOST")
-EMU_PORT = os.getenv("EMU_PORT")
-EMU_TENANT = os.getenv("EMU_TENANT")
-EMU_USERNAME = os.getenv("EMU_USERNAME")
-EMU_PASSWORD = os.getenv("EMU_PASSWORD")
-EMU_BASE_URL = f"http://{EMU_HOST}:{EMU_PORT}"  # IPv4 now, no brackets needed
+from middleware import config, emu_client
+
+EMU_BASE_URL = config.EMU_BASE_URL
+EMU_TENANT = config.EMU_TENANT
 
 # --- Step 1: get a fresh token ---
-token_resp = requests.post(
-    f"{EMU_BASE_URL}/{EMU_TENANT}/tokens",
-    json={"username": EMU_USERNAME, "password": EMU_PASSWORD},
-    headers={"Content-Type": "application/json", "Prefer": "representation=minimal"},
-    timeout=10,
-)
-token_resp.raise_for_status()
-bearer = token_resp.headers["Authorization"]
+bearer = emu_client.get_token()
 
 # --- Step 2: define the filter (adjust date as needed) ---
 filter_query = {

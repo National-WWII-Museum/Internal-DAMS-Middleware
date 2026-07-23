@@ -1,27 +1,14 @@
-import os
-from dotenv import load_dotenv
 import requests
 import json
 import time
 
-load_dotenv()
-EMU_HOST = os.getenv("EMU_HOST")
-EMU_PORT = os.getenv("EMU_PORT")
-EMU_TENANT = os.getenv("EMU_TENANT")
-EMU_USERNAME = os.getenv("EMU_USERNAME")
-EMU_PASSWORD = os.getenv("EMU_PASSWORD")
-EMU_BASE_URL = f"http://{EMU_HOST}:{EMU_PORT}"
+from middleware import config, emu_client
+
+EMU_BASE_URL = config.EMU_BASE_URL
+EMU_TENANT = config.EMU_TENANT
 
 # --- Step 1: get a fresh token ---
-token_resp = requests.post(
-    f"{EMU_BASE_URL}/{EMU_TENANT}/tokens",
-    json={"username": EMU_USERNAME, "password": EMU_PASSWORD},
-    headers={"Content-Type": "application/json", "Prefer": "representation=minimal"},
-    timeout=10,
-)
-token_resp.raise_for_status()
-bearer = token_resp.headers["Authorization"]
-headers = {"Authorization": bearer}
+headers = emu_client.get_auth_headers()
 
 # --- Step 2: targeted search for just one image record, long timeout ---
 filter_query = {
