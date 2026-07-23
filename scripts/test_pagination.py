@@ -26,7 +26,7 @@ filter_query = {
 base_params = {
     "filter": json.dumps(filter_query),
     "limit": 1000,
-    "select": "irn",
+    "select": "data.irn",
 }
 
 # --- Step 3: loop through every page ---

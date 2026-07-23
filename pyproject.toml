@@ -11,5 +11,12 @@ dependencies = [
     "python-dotenv",
 ]
 
+[project.optional-dependencies]
+dev = ["pytest"]
+
 [tool.setuptools]
 packages = ["middleware"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--ignore=scripts"]
