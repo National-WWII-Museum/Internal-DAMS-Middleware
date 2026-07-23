@@ -1,3 +1,5 @@
+import json
+
 import requests
 
 from . import config
@@ -25,13 +27,13 @@ def get_auth_headers(timeout=10):
     return {"Authorization": get_token(timeout=timeout)}
 
 
+def search_modified_since(module, since_date, fields=None, page_size=500, timeout=30):
     """
     Search an EMu module (e.g. 'ecatalogue') for records with
     AdmDateModified >= since_date, paging through all results.
 
     Returns a list of records (each record's 'data' dict).
     """
-def search_modified_since(module, since_date, fields=None, page_size=500, timeout=30):
     if fields is None:
         fields = PLACEHOLDER_FIELDS
 
@@ -61,11 +63,9 @@ def search_modified_since(module, since_date, fields=None, page_size=500, timeou
     next_search_value = None
 
     while True:
-        import json as _json  # local import kept simple for now
-
         if next_search_value is None:
             params = {
-                "filter": _json.dumps(base_params["filter"]),
+                "filter": json.dumps(base_params["filter"]),
                 "limit": base_params["limit"],
                 "select": base_params["select"],
             }
