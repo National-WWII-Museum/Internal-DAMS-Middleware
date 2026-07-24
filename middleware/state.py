@@ -33,6 +33,19 @@ def init_db():
                 PRIMARY KEY (module, irn, date_modified)
             )
         """)
+        conn.execute("""
+        CREATE TABLE IF NOT EXISTS netx_queue (
+            irn INTEGER NOT NULL,
+            module TEXT NOT NULL,
+            payload TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            retry_count INTEGER NOT NULL DEFAULT 0,
+            queued_at TEXT NOT NULL,
+            sent_at TEXT,
+            last_error TEXT,
+            PRIMARY KEY (irn, module)
+        )
+    """)
         conn.commit()
     finally:
         conn.close()
