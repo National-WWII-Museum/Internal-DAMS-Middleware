@@ -93,7 +93,7 @@ def search_modified_since(module, since_date, fields=None, page_size=500, timeou
                 params=params,
                 timeout=timeout,
             )
-            if resp.status_code != 200:                          # <-- ADD HERE
+            if resp.status_code != 200:
                 print("EMu error response body:", resp.text[:1000])
         else:
             params = {

@@ -1,5 +1,6 @@
 import sqlite3
 from pathlib import Path
+from datetime import datetime, timedelta
 
 # DB Lives in data/, per the folder structure
 DB_PATH = Path(__file__).resolve().parent.parent / "data" / "sync_state.db"
@@ -85,5 +86,26 @@ def update_last_sync_date(module, sync_date, run_at, status="success", error=Non
             (module, sync_date, run_at, status, error),
         )
         conn.commit()
+    finally:
+        conn.close()
+
+def cleanup_old_synced_records(days_to_keep=7):
+    """
+    Delete synced_records rows older than the retention window.
+
+    synced_records only exists to dedupe against same-day re-processing
+    caused by AdmDateModified being date-only (no time component). Once
+    a date is more than a day or two in the past, last_sync_date will
+    never generate a query range that reaches back that far again, so
+    old rows serve no purpose and just grow the DB unbounded.
+    """
+    cutoff = (datetime.now() - timedelta(days=days_to_keep)).strftime("%Y-%m-%d")
+    conn = get_connection()
+    try:
+        cursor = conn.execute(
+            "DELETE FROM synced_records WHERE date_modified < ?", (cutoff,)
+        )
+        conn.commit()
+        return cursor.rowcount
     finally:
         conn.close()
