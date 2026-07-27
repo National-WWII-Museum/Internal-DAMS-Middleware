@@ -89,6 +89,26 @@ def mark_synced(module, irn, date_modified, synced_at):
         conn.close()
 
 
+def queue_for_netx(module, irn, payload, queued_at, status="pending"):
+    """Stage one fetched record for the separate NetX-insert task.
+
+    One row per (module, irn) - re-queuing an irn that's already pending
+    (e.g. re-fetched on a later poll before NetX has consumed it) overwrites
+    the payload and resets it to pending rather than piling up duplicates.
+    """
+    conn = get_connection()
+    try:
+        conn.execute(
+            """INSERT OR REPLACE INTO netx_queue
+               (irn, module, payload, status, retry_count, queued_at, sent_at, last_error)
+               VALUES (?, ?, ?, ?, 0, ?, NULL, NULL)""",
+            (irn, module, payload, status, queued_at),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def update_last_sync_date(module, sync_date, run_at, status="success", error=None):
     conn = get_connection()
     try:
