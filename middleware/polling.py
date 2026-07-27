@@ -55,50 +55,64 @@ def run():
 
     run_at = datetime.now(timezone.utc).isoformat()
 
-    # Step 3: ask EMu for everything modified since that date
+    # Steps 3-7 are wrapped together: a failure anywhere in fetch, filter,
+    # CSV logging, or marking records synced means we can't be sure this run
+    # completed, so it all counts as one failed run rather than a partial
+    # success. mark_synced() commits per-record as it goes, though, so any
+    # records that *did* get marked before a later step failed will still be
+    # correctly skipped as already-synced on the retry - see step 4 below.
     try:
+        # Step 3: ask EMu for everything modified since that date
         records = emu_client.search_modified_since(MODULE, last_sync_date)
-    except emu_client.EMuAPIError as e:
-        logger.error("Fetch from EMu failed for %s: %s", MODULE, e)
-        state.update_last_sync_date(
-            MODULE, last_sync_date, run_at, status="error", error=str(e)
+        logger.info("Found %d record(s) modified since %s", len(records), last_sync_date)
+
+        # Step 4: filter out anything already synced for its exact modified
+        # date. Fetch already-synced IRNs once per distinct date, not once
+        # per record.
+        distinct_dates = {record.get("AdmDateModified") for record in records}
+        synced_by_date = {
+            date: state.get_synced_irns_for_date(MODULE, date)
+            for date in distinct_dates
+        }
+
+        new_records = []
+        for record in records:
+            irn = record.get("irn")
+            date_modified = record.get("AdmDateModified")
+            if irn not in synced_by_date[date_modified]:
+                new_records.append(record)
+
+        logger.info("%d record(s) remain after filtering already-synced", len(new_records))
+
+        # Step 5: log every new record to the fetch CSV, one row each.
+        _append_records_to_csv(new_records, FETCH_LOG_PATH, run_at)
+
+        # Step 6: mark each new record as synced.
+        for record in new_records:
+            state.mark_synced(MODULE, record.get("irn"), record.get("AdmDateModified"), run_at)
+
+        # Newest AdmDateModified seen (not just among new_records) becomes
+        # the next run's watermark - AdmDateModified is date-only, so
+        # re-querying from that same date next time and relying on
+        # synced_records to dedupe is how same-day records get picked up
+        # safely.
+        newest_date = max(
+            (r.get("AdmDateModified") for r in records if r.get("AdmDateModified")),
+            default=last_sync_date,
         )
+    except Exception as e:
+        logger.exception("Polling run failed for %s", MODULE)
+        try:
+            state.update_last_sync_date(
+                MODULE, last_sync_date, run_at, status="error", error=str(e)
+            )
+        except Exception:
+            logger.exception(
+                "Additionally failed to record error status to sync_state for %s", MODULE
+            )
         return
 
-    logger.info("Found %d record(s) modified since %s", len(records), last_sync_date)
-
-    # Step 4: filter out anything already synced for its exact modified date.
-    # Fetch already-synced IRNs once per distinct date, not once per record.
-    distinct_dates = {record.get("AdmDateModified") for record in records}
-    synced_by_date = {
-        date: state.get_synced_irns_for_date(MODULE, date)
-        for date in distinct_dates
-    }
-
-    new_records = []
-    for record in records:
-        irn = record.get("irn")
-        date_modified = record.get("AdmDateModified")
-        if irn not in synced_by_date[date_modified]:
-            new_records.append(record)
-
-    logger.info("%d record(s) remain after filtering already-synced", len(new_records))
-
-    # Step 5: log every new record to the fetch CSV, one row each.
-    _append_records_to_csv(new_records, FETCH_LOG_PATH, run_at)
-
-    # Step 6: mark each new record as synced.
-    for record in new_records:
-        state.mark_synced(MODULE, record.get("irn"), record.get("AdmDateModified"), run_at)
-
-    # Step 7: record success and advance last_sync_date to the newest
-    # AdmDateModified seen (not just among new_records) - AdmDateModified is
-    # date-only, so re-querying from that same date next time and relying on
-    # synced_records to dedupe is how same-day records get picked up safely.
-    newest_date = max(
-        (r.get("AdmDateModified") for r in records if r.get("AdmDateModified")),
-        default=last_sync_date,
-    )
+    # Step 7: record success now that fetch/filter/log/mark all completed.
     state.update_last_sync_date(MODULE, newest_date, run_at, status="success")
 
 
