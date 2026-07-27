@@ -4,7 +4,7 @@ Scheduled entry point - checks EMu for records modified since the last
 successful run, processes them, and updates the sync state.
 Intended to be run once a day via Windows Task Scheduler.
 """
-import csv
+import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
@@ -14,54 +14,29 @@ from . import emu_client
 
 MODULE = "ecatalogue"  # starting with just Catalogue for now
 
-# Every fetched record gets appended here, one row per record, regardless of
-# whether it was already synced. A separate (not-yet-built) task will read
-# this to push records into NetX - this step just captures what EMu returned.
-FETCH_LOG_PATH = Path(__file__).resolve().parent.parent / "data" / "junk" / "fetched_records.csv"
-FETCH_LOG_FIELDS = ["irn", "module", "AdmDateModified", "fetched_at"]
-
 logger = logging.getLogger(__name__)
 
 
-def _append_records_to_csv(records, path, fetched_at):
-    """Append one row per record to the fetch log, writing the header only
-    the first time the file is created."""
-    if not records:
-        return
-
-    path.parent.mkdir(parents=True, exist_ok=True)
-    file_exists = path.exists()
-
-    with open(path, "a", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=FETCH_LOG_FIELDS, extrasaction="ignore")
-        if not file_exists:
-            writer.writeheader()
-        for record in records:
-            writer.writerow({
-                "irn": record.get("irn"),
-                "module": MODULE,
-                "AdmDateModified": record.get("AdmDateModified"),
-                "fetched_at": fetched_at,
-            })
-
-
 def run():
-    # Step 1: make sure the database and tables exist
-    state.init_db()
-
-    # Step 2: find out where we left off last time
-    last_sync_date = state.get_last_sync_date(MODULE)
-    logger.info("Last sync date for %s: %s", MODULE, last_sync_date)
-
     run_at = datetime.now(timezone.utc).isoformat()
+    # Set before the try so the except block can tell whether we got far
+    # enough to know what watermark to record the failure against.
+    last_sync_date = None
 
-    # Steps 3-7 are wrapped together: a failure anywhere in fetch, filter,
-    # CSV logging, or marking records synced means we can't be sure this run
-    # completed, so it all counts as one failed run rather than a partial
-    # success. mark_synced() commits per-record as it goes, though, so any
-    # records that *did* get marked before a later step failed will still be
-    # correctly skipped as already-synced on the retry - see step 4 below.
+    # Every DB/IO touchpoint in this run lives in one try: a failure
+    # anywhere means we can't be sure this run completed, so it all counts 
+    # as one failed run. mark_synced() commits per-record as
+    # it goes, though, so any records that *did* get marked before a later
+    # step failed will still be correctly skipped as already-synced on the
+    # retry - see step 4 below.
     try:
+        # Step 1: make sure the database and tables exist
+        state.init_db()
+
+        # Step 2: find out where we left off last time
+        last_sync_date = state.get_last_sync_date(MODULE)
+        logger.info("Last sync date for %s: %s", MODULE, last_sync_date)
+
         # Step 3: ask EMu for everything modified since that date
         records = emu_client.search_modified_since(MODULE, last_sync_date)
         logger.info("Found %d record(s) modified since %s", len(records), last_sync_date)
@@ -84,12 +59,15 @@ def run():
 
         logger.info("%d record(s) remain after filtering already-synced", len(new_records))
 
-        # Step 5: log every new record to the fetch CSV, one row each.
-        _append_records_to_csv(new_records, FETCH_LOG_PATH, run_at)
-
-        # Step 6: mark each new record as synced.
+        # Step 5: queue each new record for the separate NetX-insert task,
+        # and mark it synced. Both are per-record DB writes, so a crash
+        # partway through leaves the completed ones in a consistent state
+        # (queued + synced together) rather than queued-but-not-synced.
         for record in new_records:
-            state.mark_synced(MODULE, record.get("irn"), record.get("AdmDateModified"), run_at)
+            irn = record.get("irn")
+            date_modified = record.get("AdmDateModified")
+            state.queue_for_netx(MODULE, irn, json.dumps(record), run_at)
+            state.mark_synced(MODULE, irn, date_modified, run_at)
 
         # Newest AdmDateModified seen (not just among new_records) becomes
         # the next run's watermark - AdmDateModified is date-only, so
@@ -100,8 +78,18 @@ def run():
             (r.get("AdmDateModified") for r in records if r.get("AdmDateModified")),
             default=last_sync_date,
         )
+
+        # Step 7: record success now that fetch/filter/log/mark all completed.
+        state.update_last_sync_date(MODULE, newest_date, run_at, status="success")
     except Exception as e:
         logger.exception("Polling run failed for %s", MODULE)
+        if last_sync_date is None:
+            logger.critical(
+                "Failed before determining last_sync_date for %s - skipping "
+                "sync_state write since there's no known watermark to record",
+                MODULE,
+            )
+            return
         try:
             state.update_last_sync_date(
                 MODULE, last_sync_date, run_at, status="error", error=str(e)
@@ -110,10 +98,6 @@ def run():
             logger.exception(
                 "Additionally failed to record error status to sync_state for %s", MODULE
             )
-        return
-
-    # Step 7: record success now that fetch/filter/log/mark all completed.
-    state.update_last_sync_date(MODULE, newest_date, run_at, status="success")
 
 
 def _setup_logging():
