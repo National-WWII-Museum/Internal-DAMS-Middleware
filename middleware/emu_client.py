@@ -4,9 +4,13 @@ Reusable functions for talking to the EMu REST API (emurestapi shim):
 authentication, and searching with pagination.
 """
 import json
+import logging
+
 import requests
 
 from . import config
+
+logger = logging.getLogger(__name__)
 
 # Placeholder field list - narrow it or expand it later once the NetX field
 # mapping is finalized. irn and AdmDateModified are included because the
@@ -20,14 +24,26 @@ PLACEHOLDER_FIELDS = [
 ]
 
 
+class EMuAPIError(Exception):
+    """Raised when the EMu REST API can't be reached or returns a non-2xx response.
+
+    Wraps the underlying requests exception so callers (polling.py) get one
+    exception type to catch and log, regardless of whether the failure was a
+    network error, a timeout, or an HTTP error status.
+    """
+
+
 def get_token(timeout=10):
-    resp = requests.post(
-        f"{config.EMU_BASE_URL}/{config.EMU_TENANT}/tokens",
-        json={"username": config.EMU_USERNAME, "password": config.EMU_PASSWORD},
-        headers={"Content-Type": "application/json", "Prefer": "representation=minimal"},
-        timeout=timeout,
-    )
-    resp.raise_for_status()
+    try:
+        resp = requests.post(
+            f"{config.EMU_BASE_URL}/{config.EMU_TENANT}/tokens",
+            json={"username": config.EMU_USERNAME, "password": config.EMU_PASSWORD},
+            headers={"Content-Type": "application/json", "Prefer": "representation=minimal"},
+            timeout=timeout,
+        )
+        resp.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise EMuAPIError(f"Failed to obtain auth token from EMu: {e}") from e
     return resp.headers["Authorization"]
 
 
@@ -79,6 +95,7 @@ def search_modified_since(module, since_date, fields=None, page_size=500, timeou
 
     all_records = []
     next_search_value = None
+    page_num = 1
 
     while True:
         if next_search_value is None:
@@ -87,31 +104,39 @@ def search_modified_since(module, since_date, fields=None, page_size=500, timeou
                 "limit": page_size,
                 "select": select_str,
             }
-            resp = requests.get(
-                f"{config.EMU_BASE_URL}/{config.EMU_TENANT}/{module}",
-                headers=headers,
-                params=params,
-                timeout=timeout,
-            )
-            if resp.status_code != 200:
-                print("EMu error response body:", resp.text[:1000])
+            request_headers = headers
         else:
             params = {
                 "limit": page_size,
                 "select": select_str,
             }
+            request_headers = {**headers, "Next-Search": next_search_value}
+
+        try:
             resp = requests.get(
                 f"{config.EMU_BASE_URL}/{config.EMU_TENANT}/{module}",
-                headers={**headers, "Next-Search": next_search_value},
+                headers=request_headers,
                 params=params,
                 timeout=timeout,
             )
-
             if resp.status_code != 200:
-                print("EMu error response body:", resp.text[:1000])
+                logger.error(
+                    "EMu returned %s on page %d for module %s: %s",
+                    resp.status_code, page_num, module, resp.text[:1000],
+                )
+            resp.raise_for_status()
+            data = resp.json()
+        except requests.exceptions.RequestException as e:
+            raise EMuAPIError(
+                f"EMu search failed for module '{module}' on page {page_num}: {e}"
+            ) from e
+        except ValueError as e:
+            # resp.json() raises ValueError (json.JSONDecodeError) on bad payloads
+            raise EMuAPIError(
+                f"EMu returned an unparseable response for module '{module}' "
+                f"on page {page_num}: {e}"
+            ) from e
 
-        resp.raise_for_status()
-        data = resp.json()
         matches = data.get("matches", [])
 
         for m in matches:
@@ -119,8 +144,11 @@ def search_modified_since(module, since_date, fields=None, page_size=500, timeou
             record_data["irn"] = extract_irn(record_data)
             all_records.append(record_data)
 
+        logger.debug("Fetched page %d for %s: %d record(s)", page_num, module, len(matches))
+
         next_search_value = resp.headers.get("Next-Search")
         if not next_search_value:
             break
+        page_num += 1
 
     return all_records
