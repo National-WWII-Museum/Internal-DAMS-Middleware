@@ -50,7 +50,7 @@ def init_db():
     finally:
         conn.close()
 
-def get_last_sync_date(module, default="2026-01-01"):
+def get_last_sync_date(module, default="2026-03-01"):
     """Returns the date to use as the next 'gte' filter for this module."""
     conn = get_connection()
     try:
