@@ -69,18 +69,9 @@ def run():
             state.queue_for_netx(MODULE, irn, json.dumps(record), run_at)
             state.mark_synced(MODULE, irn, date_modified, run_at)
 
-        # Newest AdmDateModified seen (not just among new_records) becomes
-        # the next run's watermark - AdmDateModified is date-only, so
-        # re-querying from that same date next time and relying on
-        # synced_records to dedupe is how same-day records get picked up
-        # safely.
-        newest_date = max(
-            (r.get("AdmDateModified") for r in records if r.get("AdmDateModified")),
-            default=last_sync_date,
-        )
-
-        # Step 7: record success now that fetch/filter/log/mark all completed.
-        state.update_last_sync_date(MODULE, newest_date, run_at, status="success")
+        # Step 6: record todays date if success
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        state.update_last_sync_date(MODULE, today, run_at, status="success")
     except Exception as e:
         logger.exception("Polling run failed for %s", MODULE)
         if last_sync_date is None:
