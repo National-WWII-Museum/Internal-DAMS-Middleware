@@ -2,7 +2,7 @@
 polling.py
 Scheduled entry point - checks EMu for records modified since the last
 successful run, processes them, and updates the sync state.
-Intended to be run once a day via Windows Task Scheduler.
+Intended to be run once a day.
 """
 import json
 import logging
@@ -63,17 +63,19 @@ def run():
         logger.info("%d record(s) remain after filtering already-synced", len(new_records))
 
         # Step 5: queue each new record for the separate NetX-insert task,
-        # and mark it synced. Both are per-record DB writes, so a crash
-        # partway through leaves the completed ones in a consistent state
         for record in new_records:
             irn = record.get("irn")
             date_modified = record.get("AdmDateModified")
             state.queue_for_netx(conn, MODULE, irn, json.dumps(record), run_at)
-            state.mark_synced(conn, MODULE, irn, date_modified, run_at)
+            # state.mark_synced(conn, MODULE, irn, date_modified, run_at)
 
         # Step 6: record todays date if success
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         state.update_last_sync_date(conn, MODULE, today, run_at, status="success")
+
+        ### FIRE CODE TO PUSH TO NETX HERE ###
+        ######################################
+        
     except Exception as e:
         logger.exception("Polling run failed for %s", MODULE)
         if last_sync_date is None:
