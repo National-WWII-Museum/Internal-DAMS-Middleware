@@ -2,7 +2,7 @@
 polling.py
 Scheduled entry point - checks EMu for records modified since the last
 successful run, processes them, and updates the sync state.
-Intended to be run once a day via Windows Task Scheduler.
+Intended to be run once a day.
 """
 import json
 import logging
@@ -29,12 +29,15 @@ def run():
     # it goes, though, so any records that *did* get marked before a later
     # step failed will still be correctly skipped as already-synced on the
     # retry - see step 4 below.
+    conn = None
     try:
+        conn = state.get_connection()
+
         # Step 1: make sure the database and tables exist
-        state.init_db()
+        state.init_db(conn)
 
         # Step 2: find out where we left off last time
-        last_sync_date = state.get_last_sync_date(MODULE)
+        last_sync_date = state.get_last_sync_date(conn, MODULE)
         logger.info("Last sync date for %s: %s", MODULE, last_sync_date)
 
         # Step 3: ask EMu for everything modified since that date
@@ -46,7 +49,7 @@ def run():
         # per record.
         distinct_dates = {record.get("AdmDateModified") for record in records}
         synced_by_date = {
-            date: state.get_synced_irns_for_date(MODULE, date)
+            date: state.get_synced_irns_for_date(conn, MODULE, date)
             for date in distinct_dates
         }
 
@@ -60,18 +63,19 @@ def run():
         logger.info("%d record(s) remain after filtering already-synced", len(new_records))
 
         # Step 5: queue each new record for the separate NetX-insert task,
-        # and mark it synced. Both are per-record DB writes, so a crash
-        # partway through leaves the completed ones in a consistent state
-        # (queued + synced together) rather than queued-but-not-synced.
         for record in new_records:
             irn = record.get("irn")
             date_modified = record.get("AdmDateModified")
-            state.queue_for_netx(MODULE, irn, json.dumps(record), run_at)
-            state.mark_synced(MODULE, irn, date_modified, run_at)
+            state.queue_for_netx(conn, MODULE, irn, json.dumps(record), run_at)
+            # state.mark_synced(conn, MODULE, irn, date_modified, run_at)
 
         # Step 6: record todays date if success
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        state.update_last_sync_date(MODULE, today, run_at, status="success")
+        state.update_last_sync_date(conn, MODULE, today, run_at, status="success")
+
+        ### FIRE CODE TO PUSH TO NETX HERE ###
+        ######################################
+        
     except Exception as e:
         logger.exception("Polling run failed for %s", MODULE)
         if last_sync_date is None:
@@ -83,12 +87,15 @@ def run():
             return
         try:
             state.update_last_sync_date(
-                MODULE, last_sync_date, run_at, status="error", error=str(e)
+                conn, MODULE, last_sync_date, run_at, status="error", error=str(e)
             )
         except Exception:
             logger.exception(
                 "Additionally failed to record error status to sync_state for %s", MODULE
             )
+    finally:
+        if conn is not None:
+            conn.close()
 
 
 def _setup_logging():
