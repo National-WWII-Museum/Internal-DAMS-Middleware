@@ -1,6 +1,6 @@
 """
 emu_client.py
-Reusable functions for talking to the EMu REST API (emurestapi shim):
+Reusable functions for talking to the EMu REST API:
 authentication, and searching with pagination.
 """
 import json
@@ -53,10 +53,10 @@ def get_auth_headers(timeout=10):
 
 def extract_irn(record):
     """
-    EMu's 'irn' field is returned as a nested reference object, not a plain
-    value, e.g.:
+    Extract 'irn' field for a nested reference object:
         {"id": "emu:/nwwiim/ecatalogue/53935", "@controls": {...}}
     This pulls out just the numeric IRN as a string: "53935"
+    This is for requesting extra data for a record from different modules
     """
     irn_field = record.get("irn")
     if isinstance(irn_field, dict):
@@ -141,7 +141,7 @@ def search_modified_since(module, since_date, fields=None, page_size=500, timeou
 
         for m in matches:
             record_data = m.get("data", {})
-            record_data["irn"] = extract_irn(record_data)
+            # record_data["irn"] = extract_irn(record_data)
             all_records.append(record_data)
 
         logger.debug("Fetched page %d for %s: %d record(s)", page_num, module, len(matches))
