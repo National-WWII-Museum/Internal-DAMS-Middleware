@@ -77,6 +77,9 @@ def search_modified_on(module, date, fields=None, page_size=500, timeout=30):
 
     Returns a list of plain dicts (one per record), with 'irn' already
     normalized to a plain string via extract_irn().
+
+    `fields` defaults to PLACEHOLDER_FIELDS. Pass an empty list to omit the
+    'select' param entirely and get every field EMu has for each record.
     """
     if fields is None:
         fields = PLACEHOLDER_FIELDS
@@ -84,7 +87,7 @@ def search_modified_on(module, date, fields=None, page_size=500, timeout=30):
     next_day = (datetime.strptime(date, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
 
     headers = get_auth_headers(timeout=timeout)
-    select_str = ",".join(fields)
+    select_str = ",".join(fields) if fields else None
 
     filter_query = {
         "AND": [
@@ -109,14 +112,16 @@ def search_modified_on(module, date, fields=None, page_size=500, timeout=30):
             params = {
                 "filter": json.dumps(filter_query),
                 "limit": page_size,
-                "select": select_str,
             }
+            if select_str:
+                params["select"] = select_str
             request_headers = headers
         else:
             params = {
                 "limit": page_size,
-                "select": select_str,
             }
+            if select_str:
+                params["select"] = select_str
             request_headers = {**headers, "Next-Search": next_search_value}
 
         try:
@@ -168,12 +173,15 @@ def search_modified_since(module, since_date, fields=None, page_size=500, timeou
 
     Returns a list of plain dicts (one per record), with 'irn' already
     normalized to a plain string via extract_irn().
+
+    `fields` defaults to PLACEHOLDER_FIELDS. Pass an empty list to omit the
+    'select' param entirely and get every field EMu has for each record.
     """
     if fields is None:
         fields = PLACEHOLDER_FIELDS
 
     headers = get_auth_headers(timeout=timeout)
-    select_str = ",".join(fields)
+    select_str = ",".join(fields) if fields else None
 
     filter_query = {
         "AND": [
@@ -197,14 +205,16 @@ def search_modified_since(module, since_date, fields=None, page_size=500, timeou
             params = {
                 "filter": json.dumps(filter_query),
                 "limit": page_size,
-                "select": select_str,
             }
+            if select_str:
+                params["select"] = select_str
             request_headers = headers
         else:
             params = {
                 "limit": page_size,
-                "select": select_str,
             }
+            if select_str:
+                params["select"] = select_str
             request_headers = {**headers, "Next-Search": next_search_value}
 
         try:
