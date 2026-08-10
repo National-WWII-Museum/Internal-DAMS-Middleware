@@ -148,7 +148,7 @@ def search_modified_on(module, date, fields=None, page_size=500, timeout=30):
 
         for m in matches:
             record_data = m.get("data", {})
-            # record_data["irn"] = extract_irn(record_data)
+            record_data["irn"] = extract_irn(record_data)
             all_records.append(record_data)
 
         logger.debug("Fetched page %d for %s: %d record(s)", page_num, module, len(matches))
@@ -236,7 +236,7 @@ def search_modified_since(module, since_date, fields=None, page_size=500, timeou
 
         for m in matches:
             record_data = m.get("data", {})
-            # record_data["irn"] = extract_irn(record_data)
+            record_data["irn"] = extract_irn(record_data)
             all_records.append(record_data)
 
         logger.debug("Fetched page %d for %s: %d record(s)", page_num, module, len(matches))
