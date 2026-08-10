@@ -22,7 +22,18 @@ PLACEHOLDER_FIELDS = [
     "data.AdmTimeModified",
     "data.WebTitle",
     "data.ObjRecordType",
+    "data.SubGeographyRef_tab",
 ]
+
+# Reference fields to follow into another module, and which fields to pull
+# back from the target record. Add more entries here as more of the final
+# JSON's fields turn out to live in a linked module rather than ecatalogue.
+REFERENCE_FIELD_MAP = {
+    "SubGeographyRef_tab": {
+        "module": "ethesaurus",
+        "fields": ["TgnNumericLatitude", "TgnNumericLongitude"],
+    },
+}
 
 
 class EMuAPIError(Exception):
@@ -65,6 +76,71 @@ def extract_irn(record):
         return irn_field.get("id", "").rstrip("/").split("/")[-1]
     # fallback, in case a response ever returns it as a plain value already
     return irn_field
+
+
+def _parse_ref_id(ref_id):
+    """'emu:/nwwiim/ethesaurus/2873616' -> ('ethesaurus', '2873616')"""
+    parts = ref_id.rstrip("/").split("/")
+    return parts[-2], parts[-1]
+
+
+def get_record(module, irn, fields=None, timeout=30):
+    """
+    Fetch a single record by module + irn (GET /{tenant}/{module}/{irn}).
+    Used to resolve a reference field to specific data in another module.
+    """
+    headers = get_auth_headers(timeout=timeout)
+    params = {}
+    if fields:
+        params["select"] = ",".join(fields)
+
+    try:
+        resp = requests.get(
+            f"{config.EMU_BASE_URL}/{config.EMU_TENANT}/{module}/{irn}",
+            headers=headers,
+            params=params,
+            timeout=timeout,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    except requests.exceptions.RequestException as e:
+        raise EMuAPIError(f"EMu record fetch failed for {module}/{irn}: {e}") from e
+    except ValueError as e:
+        raise EMuAPIError(
+            f"EMu returned an unparseable response for {module}/{irn}: {e}"
+        ) from e
+
+    return data.get("data", {})
+
+
+def resolve_references(record, timeout=30):
+    """
+    For every field in REFERENCE_FIELD_MAP present on this record, follow the
+    reference(s) (a single {id, @controls} dict, or a list of them for a
+    '_tab' field) and replace the stub with just the mapped fields pulled
+    from the target module's record.
+
+    Mutates and returns `record`.
+    """
+    for field_name, mapping in REFERENCE_FIELD_MAP.items():
+        value = record.get(field_name)
+        if value is None:
+            continue
+
+        target_fields = mapping["fields"]
+
+        def _resolve_one(ref):
+            if not isinstance(ref, dict) or "id" not in ref:
+                return ref
+            module, irn = _parse_ref_id(ref["id"])
+            return get_record(module, irn, fields=target_fields, timeout=timeout)
+
+        if isinstance(value, list):
+            record[field_name] = [_resolve_one(item) for item in value]
+        else:
+            record[field_name] = _resolve_one(value)
+
+    return record
 
 
 def search_modified_on(module, date, fields=None, page_size=500, timeout=30):

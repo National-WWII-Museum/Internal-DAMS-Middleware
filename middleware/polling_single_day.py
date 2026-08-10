@@ -52,7 +52,12 @@ def run(date):
 
         logger.info("%d record(s) remain after filtering already-synced", len(new_records))
 
-        # Step 4: queue each new record for the separate NetX-insert task
+        # Step 4: resolve reference fields (e.g. SubGeographyRef_tab -> ethesaurus)
+        # to their target-module data before queuing.
+        for record in new_records:
+            emu_client.resolve_references(record)
+
+        # Step 5: queue each new record for the separate NetX-insert task
         for record in new_records:
             irn = record.get("irn")
             date_modified = record.get("AdmDateModified")
