@@ -5,6 +5,7 @@ authentication, and searching with pagination.
 """
 import json
 import logging
+from datetime import datetime, timedelta
 
 import requests
 
@@ -64,6 +65,100 @@ def extract_irn(record):
         return irn_field.get("id", "").rstrip("/").split("/")[-1]
     # fallback, in case a response ever returns it as a plain value already
     return irn_field
+
+
+def search_modified_on(module, date, fields=None, page_size=500, timeout=30):
+    """
+    Search an EMu module (e.g. 'ecatalogue') for records with
+    AdmDateModified falling on a single day, paging through all results.
+
+    `date` is a "YYYY-MM-DD" string; the day after it is computed and used
+    as the exclusive upper bound of the range.
+
+    Returns a list of plain dicts (one per record), with 'irn' already
+    normalized to a plain string via extract_irn().
+    """
+    if fields is None:
+        fields = PLACEHOLDER_FIELDS
+
+    next_day = (datetime.strptime(date, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+
+    headers = get_auth_headers(timeout=timeout)
+    select_str = ",".join(fields)
+
+    filter_query = {
+        "AND": [
+            {
+                "data.AdmDateModified": {
+                    "range": {
+                        "gte": date,
+                        "lt": next_day,
+                        "mode": "date",
+                    }
+                }
+            }
+        ]
+    }
+
+    all_records = []
+    next_search_value = None
+    page_num = 1
+
+    while True:
+        if next_search_value is None:
+            params = {
+                "filter": json.dumps(filter_query),
+                "limit": page_size,
+                "select": select_str,
+            }
+            request_headers = headers
+        else:
+            params = {
+                "limit": page_size,
+                "select": select_str,
+            }
+            request_headers = {**headers, "Next-Search": next_search_value}
+
+        try:
+            resp = requests.get(
+                f"{config.EMU_BASE_URL}/{config.EMU_TENANT}/{module}",
+                headers=request_headers,
+                params=params,
+                timeout=timeout,
+            )
+            if resp.status_code != 200:
+                logger.error(
+                    "EMu returned %s on page %d for module %s: %s",
+                    resp.status_code, page_num, module, resp.text[:1000],
+                )
+            resp.raise_for_status()
+            data = resp.json()
+        except requests.exceptions.RequestException as e:
+            raise EMuAPIError(
+                f"EMu search failed for module '{module}' on page {page_num}: {e}"
+            ) from e
+        except ValueError as e:
+            # resp.json() raises ValueError (json.JSONDecodeError) on bad payloads
+            raise EMuAPIError(
+                f"EMu returned an unparseable response for module '{module}' "
+                f"on page {page_num}: {e}"
+            ) from e
+
+        matches = data.get("matches", [])
+
+        for m in matches:
+            record_data = m.get("data", {})
+            # record_data["irn"] = extract_irn(record_data)
+            all_records.append(record_data)
+
+        logger.debug("Fetched page %d for %s: %d record(s)", page_num, module, len(matches))
+
+        next_search_value = resp.headers.get("Next-Search")
+        if not next_search_value:
+            break
+        page_num += 1
+
+    return all_records
 
 
 def search_modified_since(module, since_date, fields=None, page_size=500, timeout=30):
