@@ -92,7 +92,10 @@ def get_record(module, irn, fields=None, timeout=30):
     headers = get_auth_headers(timeout=timeout)
     params = {}
     if fields:
-        params["select"] = ",".join(fields)
+        # select needs the 'data.' prefix, same as the search endpoint -
+        # a bare field name like 'TgnNumericLatitude' 400s.
+        select_fields = [f if f.startswith("data.") else f"data.{f}" for f in fields]
+        params["select"] = ",".join(select_fields)
 
     try:
         resp = requests.get(
