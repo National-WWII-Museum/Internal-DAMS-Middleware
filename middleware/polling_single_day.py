@@ -53,9 +53,12 @@ def run(date):
         logger.info("%d record(s) remain after filtering already-synced", len(new_records))
 
         # Step 4: resolve reference fields (e.g. SubGeographyRef_tab -> ethesaurus)
-        # to their target-module data before queuing.
-        for record in new_records:
-            emu_client.resolve_references(record)
+        # to their target-module data before queuing. One shared token for
+        # all the lookups - see resolve_references()'s docstring for why.
+        if new_records:
+            ref_headers = emu_client.get_auth_headers()
+            for record in new_records:
+                emu_client.resolve_references(record, headers=ref_headers)
 
         # Step 5: queue each new record for the separate NetX-insert task
         for record in new_records:

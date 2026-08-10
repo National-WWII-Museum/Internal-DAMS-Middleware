@@ -84,12 +84,17 @@ def _parse_ref_id(ref_id):
     return parts[-2], parts[-1]
 
 
-def get_record(module, irn, fields=None, timeout=30):
+def get_record(module, irn, fields=None, headers=None, timeout=30):
     """
     Fetch a single record by module + irn (GET /{tenant}/{module}/{irn}).
     Used to resolve a reference field to specific data in another module.
+
+    Pass `headers` (from get_auth_headers()) when making many calls in a
+    row - each call to get_auth_headers() logs in for a fresh token, and
+    EMu will reject rapid-fire logins.
     """
-    headers = get_auth_headers(timeout=timeout)
+    if headers is None:
+        headers = get_auth_headers(timeout=timeout)
     params = {}
     if fields:
         # select needs the 'data.' prefix, same as the search endpoint -
@@ -116,15 +121,22 @@ def get_record(module, irn, fields=None, timeout=30):
     return data.get("data", {})
 
 
-def resolve_references(record, timeout=30):
+def resolve_references(record, headers=None, timeout=30):
     """
     For every field in REFERENCE_FIELD_MAP present on this record, follow the
     reference(s) (a single {id, @controls} dict, or a list of them for a
     '_tab' field) and replace the stub with just the mapped fields pulled
     from the target module's record.
 
+    Pass `headers` when resolving references for many records in a row (e.g.
+    in a polling loop) so every lookup reuses one token instead of each one
+    logging in fresh - see get_record().
+
     Mutates and returns `record`.
     """
+    if headers is None:
+        headers = get_auth_headers(timeout=timeout)
+
     for field_name, mapping in REFERENCE_FIELD_MAP.items():
         value = record.get(field_name)
         if value is None:
@@ -136,7 +148,7 @@ def resolve_references(record, timeout=30):
             if not isinstance(ref, dict) or "id" not in ref:
                 return ref
             module, irn = _parse_ref_id(ref["id"])
-            return get_record(module, irn, fields=target_fields, timeout=timeout)
+            return get_record(module, irn, fields=target_fields, headers=headers, timeout=timeout)
 
         if isinstance(value, list):
             record[field_name] = [_resolve_one(item) for item in value]
