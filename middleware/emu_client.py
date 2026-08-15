@@ -17,12 +17,22 @@ logger = logging.getLogger(__name__)
 # mapping is finalized. irn and AdmDateModified are included because the
 # polling/state logic depends on them regardless of what else gets added.
 PLACEHOLDER_FIELDS = [
-    "data.irn",
     "data.AdmDateModified",
     "data.AdmTimeModified",
-    "data.WebTitle",
+    "data.irn",
     "data.ObjRecordType",
-    "data.SubGeographyRef_tab",
+    "data.TitTitleType_grp.TitTitle"
+    "data.AcqAccessionNumber"
+    "data.ColOrganization_tab",
+    "data.ColTheatre_tab",
+    "data.ColBranchOfService_tab",
+    "data.ColUnit_tab",
+    "data.SubLocalTerms_tab",
+    "data.SubGeographyRef_tab"
+    "data.ObjBriefSummary",
+    "data.WebCollectionDescription",
+    "data.WebCreditLine",
+    "data.SubTopicalSubject_tab"
 ]
 
 # Reference fields to follow into another module, and which fields to pull
@@ -31,7 +41,7 @@ PLACEHOLDER_FIELDS = [
 REFERENCE_FIELD_MAP = {
     "SubGeographyRef_tab": {
         "module": "ethesaurus",
-        "fields": ["TgnNumericLatitude", "TgnNumericLongitude"],
+        "fields": ["TgnNumericLatitude", "TgnNumericLongitude", "HieHierarchyNotation_tab"],
     },
 }
 
