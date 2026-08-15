@@ -21,14 +21,14 @@ PLACEHOLDER_FIELDS = [
     "data.AdmTimeModified",
     "data.irn",
     "data.ObjRecordType",
-    "data.TitTitleType_grp.TitTitle"
-    "data.AcqAccessionNumber"
+    "data.TitTitleType_grp.TitTitle",
+    "data.AcqAccessionNumber",
     "data.ColOrganization_tab",
     "data.ColTheatre_tab",
     "data.ColBranchOfService_tab",
     "data.ColUnit_tab",
     "data.SubLocalTerms_tab",
-    "data.SubGeographyRef_tab"
+    "data.SubGeographyRef_tab",
     "data.ObjBriefSummary",
     "data.WebCollectionDescription",
     "data.WebCreditLine",

@@ -9,6 +9,13 @@ import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
+if __package__ in (None, ""):
+    # Allow running this file directly (e.g. `python middleware/polling_single_day.py`)
+    # in addition to `python -m middleware.polling_single_day` - both need to work.
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    __package__ = "middleware"
+
 from . import state
 from . import emu_client
 
