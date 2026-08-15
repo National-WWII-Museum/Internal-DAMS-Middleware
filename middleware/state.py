@@ -46,7 +46,7 @@ def init_db(conn):
     """)
     conn.commit()
 
-def get_last_sync_date(module, default="2026-03-01"):
+def get_last_sync_date(conn, module, default="2026-03-01"):
     """Returns the date to use as the next 'gte' filter for this module."""
     row = conn.execute(
         "SELECT last_sync_date FROM sync_state WHERE module = ?", (module,)

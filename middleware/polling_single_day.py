@@ -30,11 +30,14 @@ def run(date):
         # Step 1: make sure the database and tables exist
         state.init_db(conn)
 
-        # Step 2: ask EMu for everything modified on that day
+        last_sync_date = state.get_last_sync_date(conn, MODULE)
+        logger.info("Last sync date for %s: %s (backfilling %s)", MODULE, last_sync_date, date)
+
+        # Step 3: ask EMu for everything modified on the requested day
         records = emu_client.search_modified_on(MODULE, date)
         logger.info("Found %d record(s) modified on %s", len(records), date)
 
-        # Step 3: filter out anything already synced for its exact modified
+        # Step 4: filter out anything already synced for its exact modified
         # date. Fetch already-synced IRNs once per distinct date, not once
         # per record.
         distinct_dates = {record.get("AdmDateModified") for record in records}
@@ -66,6 +69,9 @@ def run(date):
             date_modified = record.get("AdmDateModified")
             state.queue_for_netx(conn, MODULE, irn, json.dumps(record), run_at)
             # state.mark_synced(conn, MODULE, irn, date_modified, run_at)
+
+        # Step 6: record the backfilled day as the last successful sync date
+        state.update_last_sync_date(conn, MODULE, date, run_at, status="success")
 
         ### FIRE CODE TO PUSH TO NETX HERE ###
         ######################################
