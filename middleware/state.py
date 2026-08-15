@@ -54,6 +54,15 @@ def get_last_sync_date(conn, module, default="2026-03-01"):
     return row[0] if row else default
 
 
+def has_synced_before(conn, module):
+    """True if this module has a recorded sync_state row - i.e. get_last_sync_date()
+    would be returning a real prior run's date rather than its hardcoded default."""
+    row = conn.execute(
+        "SELECT 1 FROM sync_state WHERE module = ?", (module,)
+    ).fetchone()
+    return row is not None
+
+
 def get_synced_irns_for_date(conn, module, date_modified):
     """Returns the set of IRNs already synced for this exact date - used to
     filter out duplicates when polling more than once on the same day."""

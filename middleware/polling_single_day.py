@@ -6,7 +6,7 @@ search_modified_since(). Intended for backfilling/re-running a specific day.
 """
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 if __package__ in (None, ""):
@@ -24,9 +24,11 @@ MODULE = "ecatalogue"  # starting with just Catalogue for now
 logger = logging.getLogger(__name__)
 
 
-def run(date):
+def run(date=None):
     """
-    date: "YYYY-MM-DD" string for the single day to pull.
+    date: "YYYY-MM-DD" string for the single day to pull. If omitted, pulls
+    the day after this module's last recorded sync date - or, if this module
+    has never synced before, state.py's hardcoded default date itself.
     """
     run_at = datetime.now(timezone.utc).isoformat()
 
@@ -38,6 +40,13 @@ def run(date):
         state.init_db(conn)
 
         last_sync_date = state.get_last_sync_date(conn, MODULE)
+        if date is None:
+            if state.has_synced_before(conn, MODULE):
+                date = (
+                    datetime.strptime(last_sync_date, "%Y-%m-%d") + timedelta(days=1)
+                ).strftime("%Y-%m-%d")
+            else:
+                date = last_sync_date
         logger.info("Last sync date for %s: %s (backfilling %s)", MODULE, last_sync_date, date)
 
         # Step 3: ask EMu for everything modified on the requested day
@@ -105,11 +114,12 @@ if __name__ == "__main__":
     import sys
 
     _setup_logging()
-    if len(sys.argv) != 2:
-        print("Usage: python -m middleware.polling_single_day YYYY-MM-DD")
+    if len(sys.argv) > 2:
+        print("Usage: python -m middleware.polling_single_day [YYYY-MM-DD]")
         sys.exit(1)
+    date_arg = sys.argv[1] if len(sys.argv) == 2 else None
     try:
-        run(sys.argv[1])
+        run(date_arg)
     except Exception as e:
         print(f"Run failed: {e}")
         sys.exit(1)
