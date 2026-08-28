@@ -67,25 +67,52 @@ def _last_seg(v):
     return str(v).rstrip("/").split("/")[-1]
 
 
+def _write_xmu_config():
+    """xmu can't renew a token from in-memory creds -- on a 401 its get_token()
+    re-reads `config_path` from disk. So a plaintext emurestapi.toml is
+    mandatory for any run long enough to outlive one token. Write a throwaway
+    one and hand its path to EMuAPI(config_path=...).
+    """
+    from pathlib import Path
+    cfg = Path(__file__).resolve().parent.parent / "data" / "junk" / "_xmu_spike_emurestapi.toml"
+    cfg.parent.mkdir(parents=True, exist_ok=True)
+    cfg.write_text(
+        "[params]\n"
+        f'url = "{config.EMU_BASE_URL}/{config.EMU_TENANT}"\n'
+        f'username = "{config.EMU_USERNAME}"\n'
+        f'password = "{config.EMU_PASSWORD}"\n'
+        "autopage = false\n"
+    )
+    return cfg
+
+
 def fetch_xmu(date):
+    from pathlib import Path
     from xmu import EMuAPI, range_  # noqa: import here so --help works without xmu
 
     next_day = (datetime.strptime(date, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
 
-    api = EMuAPI(
-        # xmu wants the tenant baked into the URL; config.EMU_BASE_URL stops at host:port
-        url=f"{config.EMU_BASE_URL}/{config.EMU_TENANT}",
-        username=config.EMU_USERNAME,
-        password=config.EMU_PASSWORD,
-    )
+    # start clean: xmu will blindly reuse a stale ./token file if one is present
+    Path("token").unlink(missing_ok=True)
+    cfg = _write_xmu_config()
 
-    resp = api.search(
-        MODULE,
-        select=XMU_SELECT,
-        filter_={"AdmDateModified": range_(gte=date, lt=next_day, mode="date")},
-        limit=1000,
-    )
+    try:
+        api = EMuAPI(config_path=str(cfg))
 
+        resp = api.search(
+            MODULE,
+            select=XMU_SELECT,
+            filter_={"AdmDateModified": range_(gte=date, lt=next_day, mode="date")},
+            limit=1000,
+        )
+        out = _drain(api, resp)
+    finally:
+        cfg.unlink(missing_ok=True)
+        Path("token").unlink(missing_ok=True)
+    return out
+
+
+def _drain(api, resp):
     out = {}
     page = 1
     while True:
