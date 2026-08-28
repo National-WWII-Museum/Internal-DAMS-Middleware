@@ -55,7 +55,18 @@ def fetch_legacy(date):
 #
 # NOTE: signatures below are from xmu 0.2b1 docs/source. If the installed
 # version differs, this function is the only thing to adjust.
+#
+# xmu's built-in autopage (`for rec in resp`) does NOT work against this
+# emurestapi build: it stops paging once `count >= resp.hits`, but this shim
+# never sends a `hits` field, so it quits after page 1. We drive next_page()
+# by hand here, following the Next-Search header the way emu_client does.
 # --------------------------------------------------------------------------
+def _last_seg(v):
+    if v is None:
+        return None
+    return str(v).rstrip("/").split("/")[-1]
+
+
 def fetch_xmu(date):
     from xmu import EMuAPI, range_  # noqa: import here so --help works without xmu
 
@@ -66,30 +77,32 @@ def fetch_xmu(date):
         url=f"{config.EMU_BASE_URL}/{config.EMU_TENANT}",
         username=config.EMU_USERNAME,
         password=config.EMU_PASSWORD,
-        autopage=True,          # follow Next-Search for us
     )
-    # If an emurestapi.toml ever lands in the repo root it'd override the kwargs
-    # above -- there isn't one now, and xmu falls back to kwargs when it's absent.
 
     resp = api.search(
         MODULE,
         select=XMU_SELECT,
         filter_={"AdmDateModified": range_(gte=date, lt=next_day, mode="date")},
-        limit=500,
+        limit=1000,
     )
 
     out = {}
-    try:
-        for rec in resp:                   # autopage=True -> iterates all pages
-            rec = dict(rec)
-            irn = str(rec.get("irn"))
-            _resolve_refs_xmu(api, rec)
-            out[irn] = rec
-    except ValueError as e:
-        # xmu raises instead of yielding nothing when matches == []
-        if "No records found" not in str(e):
-            raise
-        print("  [xmu] server returned zero matches for this date")
+    page = 1
+    while True:
+        matches = resp.json().get("matches", [])
+        for m in matches:
+            data = dict(m.get("data", {}))
+            key = _last_seg(m.get("id") or data.get("irn"))
+            data["irn"] = key
+            _resolve_refs_xmu(api, data)
+            out[key] = data
+        print(f"  [xmu] page {page}: {len(matches)} record(s) (running total {len(out)})")
+        try:
+            resp = resp.next_page()
+        except (ValueError, KeyError):
+            # ValueError / KeyError == no Next-Search header, i.e. last page
+            break
+        page += 1
     return out
 
 
