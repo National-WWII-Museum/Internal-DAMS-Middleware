@@ -1,0 +1,6 @@
+2026-07-27 12:49:57,618 INFO __main__: Last sync date for ecatalogue: 2026-01-01
+2026-07-27 12:50:22,799 INFO __main__: Found 20299 record(s) modified since 2026-01-01
+2026-07-27 12:50:22,930 INFO __main__: 20299 record(s) remain after filtering already-synced
+2026-07-27 13:01:35,554 INFO __main__: Last sync date for ecatalogue: 2026-03-01
+2026-07-27 13:01:52,313 INFO __main__: Found 12269 record(s) modified since 2026-03-01
+2026-07-27 13:01:52,392 INFO __main__: 12269 record(s) remain after filtering already-synced

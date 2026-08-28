@@ -5,3 +5,9 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 *.prof
+data/junk/
+data/*.db
+Emu-records-2.0/
+
+# xmu writes a plaintext token file to CWD
+token
