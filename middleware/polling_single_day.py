@@ -1,20 +1,12 @@
 """
 polling_single_day.py
 Same as polling.py, but pulls just one day's worth of updates via
-emu_client.search_modified_on() instead of the open-ended
-search_modified_since(). Intended for backfilling/re-running a specific day.
+emu_client.search_modified_on()
 """
 import json
 import logging
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-
-if __package__ in (None, ""):
-    # Allow running this file directly (e.g. `python middleware/polling_single_day.py`)
-    # in addition to `python -m middleware.polling_single_day` - both need to work.
-    import sys
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-    __package__ = "middleware"
 
 from . import state
 from . import emu_client

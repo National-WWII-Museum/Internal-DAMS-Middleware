@@ -13,26 +13,34 @@ from . import config
 
 logger = logging.getLogger(__name__)
 
-# Placeholder field list - narrow it or expand it later once the NetX field
-# mapping is finalized. irn and AdmDateModified are included because the
-# polling/state logic depends on them regardless of what else gets added.
+# fields to review
+# "data.SubLocalTerms_tab", better than WebLocalTerms_tab??
+
+
 PLACEHOLDER_FIELDS = [
     "data.AdmDateModified",
     "data.AdmTimeModified",
-    "data.irn",
-    "data.ObjRecordType",
     "data.TitTitleType_grp.TitTitle",
+    "data.irn",
     "data.AcqAccessionNumber",
-    "data.ColOrganization_tab",
-    "data.ColTheatre_tab",
-    "data.ColBranchOfService_tab",
-    "data.ColUnit_tab",
-    "data.SubLocalTerms_tab",
-    "data.SubGeographyRef_tab",
-    "data.ObjBriefSummary",
-    "data.WebCollectionDescription",
+    "data.WebOrganization_tab",
+    "data.WebTheatre_tab",
+    "data.WebBranch_tab",
+    "data.WebUnit_tab",
+    "data.WebLocalTerms_tab",
+    "data.WebCollectionDescription"
+    "data.WebBattleEvent_tab",
+    "data.WebGeography_tab"
+    "data.SubTopicalSubject_tab",
+    "data.WebHometown",
+    "data.WebDonorName",
     "data.WebCreditLine",
-    "data.SubTopicalSubject_tab"
+    "data.WebObjectType_tab",
+    "data.ObjRecordType",
+    "data.ObjBriefSummary",
+    "data.ExtFormat_grp.ExtFormat",
+    "data.VidOverallPlayingTime",
+    "data.IntInterviewDate0"
 ]
 
 # Reference fields to follow into another module, and which fields to pull
