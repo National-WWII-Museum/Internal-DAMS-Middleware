@@ -4,3 +4,14 @@ EMU_TENANT=emutest
 EMU_USERNAME=your_emu_username
 EMU_PASSWORD=your_emu_password
 
+
+#   Data Source=SQL2019-1\NETX; User ID=emusync; Encrypt=True; TrustServerCertificate=True
+DB_HOST=SQL2019-1\NETX
+DB_PORT=
+DB_NAME=EmuStaging
+DB_USER=emusync
+DB_PASSWORD=your_sql_password
+# Optional - defaults shown
+DB_DRIVER=ODBC Driver 18 for SQL Server
+DB_ENCRYPT=yes
+DB_TRUST_SERVER_CERT=yes

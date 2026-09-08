@@ -1,142 +1,113 @@
-import sqlite3
-from pathlib import Path
-from datetime import datetime, timedelta
+"""
+state.py
+Persistence for the poll watermark (dbo.sync_state) and the landing table
+(dbo.emu_staging), both in the remote MS SQL Server database - connection
+details in config.py / .env.
 
-# DB Lives in data/, per the folder structure
-DB_PATH = Path(__file__).resolve().parent.parent / "data" / "sync_state.db"
+The schema is owned and provisioned by the DBA (see the project's SQL
+script). This module only reads and writes rows; it never creates or
+alters tables.
+"""
+from datetime import date, datetime
+
+import pyodbc
+
+from .config import DB_CONNECTION_STRING
+from .mapping import WRITE_COLUMNS
+
+# dbo.sync_state holds exactly one row, updated in place.
+SYNC_STATE_ID = 1
+DEFAULT_SYNC_DATE = "2026-03-01"
 
 
 def get_connection():
-    DB_PATH.parent.mkdir(exist_ok=True)  # make sure data/ exists
-    return sqlite3.connect(DB_PATH)
+    return pyodbc.connect(DB_CONNECTION_STRING)
 
 
-def init_db(conn):
-    """Create tables if they don't already exist. Safe to call every run."""
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS sync_state (
-            module TEXT PRIMARY KEY,
-            last_sync_date TEXT,
-            last_run_at TEXT,
-            last_run_status TEXT,
-            last_error TEXT
-        )
-    """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS synced_records (
-            module TEXT,
-            irn TEXT,
-            date_modified TEXT,
-            synced_at TEXT,
-            PRIMARY KEY (module, irn, date_modified)
-        )
-    """)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS netx_queue (
-            irn INTEGER NOT NULL,
-            module TEXT NOT NULL,
-            payload TEXT NOT NULL,
-            status TEXT NOT NULL DEFAULT 'pending',
-            retry_count INTEGER NOT NULL DEFAULT 0,
-            queued_at TEXT NOT NULL,
-            sent_at TEXT,
-            last_error TEXT,
-            PRIMARY KEY (irn, module)
-        )
-    """)
-    conn.commit()
+# --- sync_state -------------------------------------------------------------
 
-def get_last_sync_date(conn, module, default="2026-03-01"):
-    """Returns the date to use as the next 'gte' filter for this module."""
+def get_last_sync_date(conn, default=DEFAULT_SYNC_DATE):
+    """The 'gte' watermark for the next poll, as a 'YYYY-MM-DD' string.
+
+    Reads dbo.sync_state.last_sync_date (row id=1); falls back to `default`
+    when that row is missing or the column is NULL.
+    """
     row = conn.execute(
-        "SELECT last_sync_date FROM sync_state WHERE module = ?", (module,)
+        "SELECT last_sync_date FROM sync_state WHERE id = ?", (SYNC_STATE_ID,)
     ).fetchone()
-    return row[0] if row else default
+    if row and row[0] is not None:
+        value = row[0]
+        if isinstance(value, (datetime, date)):
+            return value.strftime("%Y-%m-%d")
+        return str(value)[:10]
+    return default
 
 
-def has_synced_before(conn, module):
-    """True if this module has a recorded sync_state row - i.e. get_last_sync_date()
-    would be returning a real prior run's date rather than its hardcoded default."""
+def has_synced_before(conn):
+    """True once a real run has written a watermark - i.e. get_last_sync_date()
+    is returning a prior run's date rather than its hardcoded default."""
     row = conn.execute(
-        "SELECT 1 FROM sync_state WHERE module = ?", (module,)
+        "SELECT last_sync_date FROM sync_state WHERE id = ?", (SYNC_STATE_ID,)
     ).fetchone()
-    return row is not None
+    return bool(row and row[0] is not None)
 
 
-def get_synced_irns_for_date(conn, module, date_modified):
-    """Returns the set of IRNs already synced for this exact date - used to
-    filter out duplicates when polling more than once on the same day."""
-    rows = conn.execute(
-        "SELECT irn FROM synced_records WHERE module = ? AND date_modified = ?",
-        (module, date_modified),
-    ).fetchall()
-    return {row[0] for row in rows}
+_SYNC_STATE_MERGE = """
+MERGE dbo.sync_state AS t
+USING (SELECT ? AS id) AS s
+  ON t.id = s.id
+WHEN MATCHED THEN UPDATE SET
+    last_sync_date = ?, last_run_at = ?, rows_processed = ?, notes = ?
+WHEN NOT MATCHED THEN
+    INSERT (id, last_sync_date, last_run_at, rows_processed, notes)
+    VALUES (?, ?, ?, ?, ?);
+"""
 
 
-def mark_synced(conn, module, irn, date_modified, synced_at):
-    conn.execute(
-        """INSERT OR REPLACE INTO synced_records (module, irn, date_modified, synced_at)
-           VALUES (?, ?, ?, ?)""",
-        (module, irn, date_modified, synced_at),
-    )
+def update_sync_state(conn, last_sync_date, last_run_at, rows_processed, notes=None):
+    """Write the single sync_state row. `last_sync_date` may be a
+    'YYYY-MM-DD' string or a date/datetime; `notes` is truncated to the
+    column's 1000 chars."""
+    if isinstance(last_sync_date, str):
+        last_sync_date = datetime.strptime(last_sync_date, "%Y-%m-%d").date()
+    if notes is not None:
+        notes = str(notes)[:1000]
+    params = [
+        SYNC_STATE_ID, last_sync_date, last_run_at, rows_processed, notes,
+        SYNC_STATE_ID, last_sync_date, last_run_at, rows_processed, notes,
+    ]
+    conn.execute(_SYNC_STATE_MERGE, params)
     conn.commit()
 
 
-def queue_for_netx(conn, module, irn, payload, queued_at, status="pending"):
-    """Stage one fetched record for the separate NetX-insert task.
+# --- emu_staging -----------------------------------------------------------
 
-    One row per (module, irn) - re-queuing an irn that's already pending
-    (e.g. re-fetched on a later poll before NetX has consumed it) overwrites
-    the payload and resets it to pending rather than piling up duplicates.
+_UPDATE_SET = ",\n    ".join(f"{c} = ?" for c in WRITE_COLUMNS)
+_INSERT_COLS = ", ".join(["irn", *WRITE_COLUMNS])
+_INSERT_PLACEHOLDERS = ", ".join(["?"] * (1 + len(WRITE_COLUMNS)))
+
+_STAGING_MERGE = f"""
+MERGE dbo.emu_staging AS t
+USING (SELECT ? AS irn) AS s
+  ON t.irn = s.irn
+WHEN MATCHED THEN UPDATE SET
+    {_UPDATE_SET},
+    synced = 0,
+    sync_failed = 0,
+    updated_at = SYSUTCDATETIME()
+WHEN NOT MATCHED THEN
+    INSERT ({_INSERT_COLS})
+    VALUES ({_INSERT_PLACEHOLDERS});
+"""
+
+
+def upsert_staging_record(conn, irn, row):
+    """Insert or update one emu_staging row, keyed on irn.
+
+    An existing row is overwritten and its synced / sync_failed flags reset
+    to 0 so the NetX push step re-processes the changed record. Commits per
+    record so a mid-run failure still leaves already-staged rows behind.
     """
-    conn.execute(
-        """INSERT OR REPLACE INTO netx_queue
-           (irn, module, payload, status, retry_count, queued_at, sent_at, last_error)
-           VALUES (?, ?, ?, ?, 0, ?, NULL, NULL)""",
-        (irn, module, payload, status, queued_at),
-    )
+    values = [row[c] for c in WRITE_COLUMNS]
+    conn.execute(_STAGING_MERGE, [irn, *values, irn, *values])
     conn.commit()
-
-
-def update_last_sync_date(conn, module, sync_date, run_at, status="success", error=None):
-    conn.execute(
-        """INSERT OR REPLACE INTO sync_state
-           (module, last_sync_date, last_run_at, last_run_status, last_error)
-           VALUES (?, ?, ?, ?, ?)""",
-        (module, sync_date, run_at, status, error),
-    )
-    conn.commit()
-
-
-def cleanup_sent_netx_records(conn, module=None):
-    """
-    Delete netx_queue rows already marked 'sent' - once a record has
-    been exported/handed off there's no further use for the row, so
-    this keeps the table from growing unbounded run over run.
-    """
-    if module is not None:
-        cursor = conn.execute(
-            "DELETE FROM netx_queue WHERE status = 'sent' AND module = ?", (module,)
-        )
-    else:
-        cursor = conn.execute("DELETE FROM netx_queue WHERE status = 'sent'")
-    conn.commit()
-    return cursor.rowcount
-
-
-def cleanup_old_synced_records(conn, days_to_keep=7):
-    """
-    Delete synced_records rows older than the retention window.
-
-    synced_records only exists to dedupe against same-day re-processing
-    caused by AdmDateModified being date-only (no time component). Once
-    a date is more than a day or two in the past, last_sync_date will
-    never generate a query range that reaches back that far again, so
-    old rows serve no purpose and just grow the DB unbounded.
-    """
-    cutoff = (datetime.now() - timedelta(days=days_to_keep)).strftime("%Y-%m-%d")
-    cursor = conn.execute(
-        "DELETE FROM synced_records WHERE date_modified < ?", (cutoff,)
-    )
-    conn.commit()
-    return cursor.rowcount

@@ -31,28 +31,11 @@ C:\ww2-emu-netx\
 
 - `middleware/` is the actual product — the code that eventually runs continuously in production (the polling loop, the webhook listener).
 - `scripts/` all things you run manually, once in a while, to explore or diagnose something. 
-- `data/` is output, not input — schema JSON, CSVs,  SQLite state file.
+- `data/` is output, not input — schema JSON, CSVs, logs. (Sync state lives on a SQL Server DB on a different on site VM.)
 
 ---
 
-## Architecture
 
-```
-┌─────────────────┐         REST/HTTP          ┌──────────────────┐
-│  Middleware VM  │ ───────────────────────►   │     EMu VM       │
-│  (Windows)      │   emurestapi shim (8084)   │  (Ubuntu 20.04)  │
-│                 │ ◄───────────────────────   │                  │
-│  Python script  │      Mason+JSON            │  emurestapi      │
-│  (this repo)    │                            │  → Texpress DB   │
-└─────────────────┘                            └──────────────────┘
-        │   ▼
-        │   │
-        ▼   │
-┌─────────────────┐
-│      NetX       │
-│  (DAM system)   │
-└─────────────────┘
-```
 
 - **emurestapi** is a Scala-based REST shim sitting in front of Texpress (EMu's database engine). It returns **Mason+JSON** — a hypermedia-flavored JSON format, not plain REST JSON.
 - The shim is **multi-tenant** — one shim instance can serve multiple EMu environments, distinguished by a `{tenant}` name in the URL path (e.g. `/emutest/tokens`). Tenant name is defined server-side in `restapi/conf/tenants.conf` and doesn't necessarily match the instance name.
@@ -89,6 +72,15 @@ EMU_PORT=8084        # emurestapi shim port
 EMU_TENANT=          # tenant name from tenants.conf — confirm, do not assume it matches instance name
 EMU_USERNAME=        # EMu user credentials for REST API auth
 EMU_PASSWORD=        #
+
+DB_HOST=             # SSMS "Server name", incl. instance, e.g. SQL2019-1\NETX
+DB_PORT=             # blank for a named instance (SQL Browser resolves it); set only for a fixed TCP port
+DB_NAME=EmuStaging   # target database
+DB_USER=             # SQL login
+DB_PASSWORD=         #
+DB_DRIVER=           # optional, default "ODBC Driver 18 for SQL Server" — must be installed on the VM
+DB_ENCRYPT=          # optional, default "yes"
+DB_TRUST_SERVER_CERT= # optional, default "yes" (internal server, self-signed cert)
 ```
 
 ---
@@ -116,14 +108,15 @@ Content-Type: application/json
 ---
 
 
-## Planned Sync Approach
+## Sync Approach
 
-1. Poll EMu for Catalogue/Multimedia records where `AdmDateModified` is newer than the last successful sync run.
-2. Fetch relevant fields for each changed record.
-3. Push relevant data/assets to NetX.
-4. Record the new "last successful sync" timestamp/state.
+1. Poll EMu (`ecatalogue`) for records where `AdmDateModified` is newer than the last successful sync run.
+2. Fetch the mapped fields for each changed record and resolve reference fields (e.g. `SubGeographyRef_tab` → `ethesaurus`).
+3. Map each record onto a `dbo.emu_staging` row (`middleware/mapping.py`) and upsert it — one row per `irn`. An already-synced record that changed is re-staged with `synced` / `sync_failed` reset to 0.
+4. A separate NetX push step reads `emu_staging` and sets `synced` / `sync_failed` / `synced_at`.
+5. Advance the watermark in `dbo.sync_state` (a single row, `id = 1`).
 
-**State management:** SQLite is the planned approach for tracking sync state (last run timestamp, per-record status), preferred over a plain text/flat file for production robustness — not yet implemented.
+**State management:** both tables live in a remote **MS SQL Server** database (`EmuStaging`), reached via `pyodbc` — `middleware/state.py`, connection built in `middleware/config.py` from the `DB_*` env vars. The schema is **owned and provisioned by the DBA**; this app only reads and writes rows (it does not create or alter tables). `middleware/mapping.WRITE_COLUMNS` and `emu_client.PLACEHOLDER_FIELDS` must stay in sync with the `emu_staging` column list.
 
 ---
 

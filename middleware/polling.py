@@ -1,16 +1,16 @@
 """
 polling.py
-Scheduled entry point - checks EMu for records modified since the last
-successful run, processes them, and updates the sync state.
-Intended to be run once a day.
+Scheduled entry point - pulls EMu ecatalogue records modified since the
+last successful run, maps each into a dbo.emu_staging row, and advances
+the sync watermark. Intended to be run once a day.
 """
-import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
 from . import state
 from . import emu_client
+from . import mapping
 
 MODULE = "ecatalogue"  # starting with just Catalogue for now
 
@@ -18,81 +18,59 @@ logger = logging.getLogger(__name__)
 
 
 def run():
-    run_at = datetime.now(timezone.utc).isoformat()
-    # Set before the try so the except block can tell whether we got far
-    # enough to know what watermark to record the failure against.
+    # naive UTC - the sync_state datetime2 columns carry no tz
+    run_at = datetime.now(timezone.utc).replace(tzinfo=None)
     last_sync_date = None
+    rows_processed = 0
 
-    # Every DB/IO touchpoint in this run lives in one try: a failure
-    # anywhere means we can't be sure this run completed, so it all counts 
-    # as one failed run. mark_synced() commits per-record as
-    # it goes, though, so any records that *did* get marked before a later
-    # step failed will still be correctly skipped as already-synced on the
-    # retry - see step 4 below.
     conn = None
     try:
         conn = state.get_connection()
 
-        # Step 1: make sure the database and tables exist
-        state.init_db(conn)
+        # Step 1: find out where we left off last time
+        last_sync_date = state.get_last_sync_date(conn)
+        logger.info("Last sync date: %s", last_sync_date)
 
-        # Step 2: find out where we left off last time
-        last_sync_date = state.get_last_sync_date(conn, MODULE)
-        logger.info("Last sync date for %s: %s", MODULE, last_sync_date)
-
-        # Step 3: ask EMu for everything modified since that date
+        # Step 2: ask EMu for everything modified since that date
         records = emu_client.search_modified_since(MODULE, last_sync_date)
         logger.info("Found %d record(s) modified since %s", len(records), last_sync_date)
 
-        # Step 4: filter out anything already synced for its exact modified
-        # date. Fetch already-synced IRNs once per distinct date, not once
-        # per record.
-        distinct_dates = {record.get("AdmDateModified") for record in records}
-        synced_by_date = {
-            date: state.get_synced_irns_for_date(conn, MODULE, date)
-            for date in distinct_dates
-        }
+        # Step 3: resolve reference fields (e.g. SubGeographyRef_tab -> ethesaurus),
+        # map each record to its staging row, and upsert it. One shared token
+        # for all the lookups - see resolve_references()'s docstring.
+        if records:
+            ref_headers = emu_client.get_auth_headers()
+            for record in records:
+                emu_client.resolve_references(record, headers=ref_headers)
+                row = mapping.record_to_staging_row(record)
+                state.upsert_staging_record(conn, record.get("irn"), row)
+                rows_processed += 1
 
-        new_records = []
-        for record in records:
-            irn = record.get("irn")
-            date_modified = record.get("AdmDateModified")
-            if irn not in synced_by_date[date_modified]:
-                new_records.append(record)
+        logger.info("Staged %d record(s)", rows_processed)
 
-        logger.info("%d record(s) remain after filtering already-synced", len(new_records))
-
-        # Step 5: queue each new record for the separate NetX-insert task,
-        for record in new_records:
-            irn = record.get("irn")
-            date_modified = record.get("AdmDateModified")
-            state.queue_for_netx(conn, MODULE, irn, json.dumps(record), run_at)
-            # state.mark_synced(conn, MODULE, irn, date_modified, run_at)
-
-        # Step 6: record todays date if success
+        # Step 4: advance the watermark to today on success
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        state.update_last_sync_date(conn, MODULE, today, run_at, status="success")
+        state.update_sync_state(
+            conn, today, run_at, rows_processed,
+            notes=f"ok: {rows_processed} record(s) modified since {last_sync_date}",
+        )
 
-        ### FIRE CODE TO PUSH TO NETX HERE ###
-        ######################################
-        
     except Exception as e:
         logger.exception("Polling run failed for %s", MODULE)
-        if last_sync_date is None:
+        if conn is None or last_sync_date is None:
             logger.critical(
-                "Failed before determining last_sync_date for %s - skipping "
-                "sync_state write since there's no known watermark to record",
-                MODULE,
+                "Failed before a DB connection / watermark was established - "
+                "nothing recorded to sync_state"
             )
             return
         try:
-            state.update_last_sync_date(
-                conn, MODULE, last_sync_date, run_at, status="error", error=str(e)
+            # keep the old watermark so the next run retries the same window
+            state.update_sync_state(
+                conn, last_sync_date, run_at, rows_processed,
+                notes=f"ERROR after {rows_processed} record(s): {e}",
             )
         except Exception:
-            logger.exception(
-                "Additionally failed to record error status to sync_state for %s", MODULE
-            )
+            logger.exception("Additionally failed to record error status to sync_state")
     finally:
         if conn is not None:
             conn.close()

@@ -17,10 +17,13 @@ logger = logging.getLogger(__name__)
 # "data.SubLocalTerms_tab", better than WebLocalTerms_tab??
 
 
+# Fields pulled for each polled record. These feed mapping.record_to_staging_row(),
+# which maps them onto dbo.emu_staging columns - keep the two in sync.
 PLACEHOLDER_FIELDS = [
     "data.AdmDateModified",
     "data.AdmTimeModified",
     "data.TitTitleType_grp.TitTitle",
+    "data.TitTitleType_grp.TitTitleType",
     "data.irn",
     "data.AcqAccessionNumber",
     "data.WebOrganization_tab",
@@ -28,10 +31,11 @@ PLACEHOLDER_FIELDS = [
     "data.WebBranch_tab",
     "data.WebUnit_tab",
     "data.WebLocalTerms_tab",
-    "data.WebCollectionDescription"
+    "data.WebCollectionDescription",
     "data.WebBattleEvent_tab",
-    "data.WebGeography_tab"
+    "data.WebGeography_tab",
     "data.SubTopicalSubject_tab",
+    "data.SubGeographyRef_tab",
     "data.WebHometown",
     "data.WebDonorName",
     "data.WebCreditLine",
@@ -40,7 +44,9 @@ PLACEHOLDER_FIELDS = [
     "data.ObjBriefSummary",
     "data.ExtFormat_grp.ExtFormat",
     "data.VidOverallPlayingTime",
-    "data.IntInterviewDate0"
+    "data.IntInterviewDate0",
+    "data.ExtInterviewSummary",
+    "data.SummaryData",
 ]
 
 # Reference fields to follow into another module, and which fields to pull
