@@ -22,14 +22,8 @@ Rules (see project notes / schema comments):
   are kept alongside for fidelity.
 """
 import json
-import re
 from datetime import date, datetime
 from itertools import zip_longest
-
-# A trailing ".ext" where ext starts with a letter and is 2-5 chars total
-# (jpg, tiff, mp4, cr2, ...). Deliberately does NOT match numeric-only tails
-# like ".4" or ".4_001" so a dotted accession-style identifier is left alone.
-_FILE_EXT_RE = re.compile(r"\.[A-Za-z][A-Za-z0-9]{1,4}$")
 
 # emu_staging columns the middleware writes. Everything else on the table is
 # either DB-managed bookkeeping (irn, synced, sync_failed, synced_at,
@@ -230,17 +224,14 @@ def _extract_geography(record):
 def _extract_file_name(record):
     """MulIdentifier off the first MulMultiMediaRef_tab entry, which
     emu_client.resolve_references has resolved into the emultimedia record.
-    Uses the first linked asset if a record has several. The file extension
-    is stripped (e.g. '2019.123.4_001.jpg' -> '2019.123.4_001')."""
+    Uses the first linked asset if a record has several. The full filename
+    including extension is kept (e.g. '2019.123.4_001.jpg')."""
     ref = record.get("MulMultiMediaRef_tab")
     if isinstance(ref, list):
         ref = ref[0] if ref else None
     if not isinstance(ref, dict):
         return None
-    identifier = _scalar(ref.get("MulIdentifier"))
-    if identifier is None:
-        return None
-    return _FILE_EXT_RE.sub("", str(identifier))
+    return _scalar(ref.get("MulIdentifier"))
 
 
 def record_to_staging_row(record):
