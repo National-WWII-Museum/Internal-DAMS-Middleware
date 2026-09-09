@@ -59,12 +59,13 @@ WRITE_COLUMNS = [
     "formats",
     "interview_date",
     "geo_hierarchy",
+    "file_name",
     "raw_json",
 ]
 
 
 def _clean(value):
-    """Empty string / whitespace / empty list -> None. Otherwise trimmed."""
+    """Empty string, whitespace, empty list = None. Otherwise trimmed."""
     if value is None:
         return None
     if isinstance(value, str):
@@ -119,7 +120,7 @@ def _pack_csv_bare_single(value):
 
 
 def _pack_optionset(value):
-    """Pack an option-set multi-value field as bare comma, no space: 'a,b,c'
+    """Converts multi-value field to bare comma, no space: 'a,b,c'
     (matches how NetX renders option_set_item names). Empty -> None."""
     items = _as_list(value)
     if not items:
@@ -220,6 +221,18 @@ def _extract_geography(record):
     )
 
 
+def _extract_file_name(record):
+    """MulIdentifier off the first MulMultiMediaRef_tab entry, which
+    emu_client.resolve_references has resolved into the emultimedia record.
+    Uses the first linked asset if a record has several."""
+    ref = record.get("MulMultiMediaRef_tab")
+    if isinstance(ref, list):
+        ref = ref[0] if ref else None
+    if not isinstance(ref, dict):
+        return None
+    return _scalar(ref.get("MulIdentifier"))
+
+
 def record_to_staging_row(record):
     """Map one resolved EMu record to a dict keyed by WRITE_COLUMNS."""
     date_modified, time_modified, modified_at = _extract_modified(record)
@@ -255,6 +268,7 @@ def record_to_staging_row(record):
         "formats": _pack_csv(_group_values(record, "ExtFormat_grp", "ExtFormat")),
         "interview_date": _truncate(_scalar(record.get("IntInterviewDate0")), 50),
         "geo_hierarchy": geo_hierarchy,
+        "file_name": _truncate(_extract_file_name(record), 500),
         "raw_json": json.dumps(record, default=str, ensure_ascii=False),
     }
 

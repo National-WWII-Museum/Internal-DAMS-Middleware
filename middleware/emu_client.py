@@ -36,6 +36,7 @@ PLACEHOLDER_FIELDS = [
     "data.WebGeography_tab",
     "data.SubTopicalSubject_tab",
     "data.SubGeographyRef_tab",
+    "data.MulMultiMediaRef_tab",
     "data.WebHometown",
     "data.WebDonorName",
     "data.WebCreditLine",
@@ -56,6 +57,10 @@ REFERENCE_FIELD_MAP = {
     "SubGeographyRef_tab": {
         "module": "ethesaurus",
         "fields": ["TgnNumericLatitude", "TgnNumericLongitude", "HieHierarchyNotation_tab"],
+    },
+    "MulMultiMediaRef_tab": {
+        "module": "emultimedia",
+        "fields": ["MulIdentifier"],
     },
 }
 
