@@ -13,8 +13,6 @@ Rules (see project notes / schema comments):
       even a lone one; embedded double quotes doubled)     -> _pack_csv()
     * option-set attributes   -> bare comma, no space, 'a,b,c' (NetX renders
       option_set_item names, never quotes them)            -> _pack_optionset()
-- title comes from the TitTitleType_grp entry whose TitTitleType is "Main"
-  (falling back to the first title, then a bare TitTitle field).
 - latitude / longitude are the (single-valued) coordinate fields off the
   first resolved SubGeographyRef_tab entry.
 - modified_at combines AdmDateModified + AdmTimeModified and is what the
@@ -23,7 +21,6 @@ Rules (see project notes / schema comments):
 """
 import json
 from datetime import date, datetime
-from itertools import zip_longest
 
 # emu_staging columns the middleware writes. Everything else on the table is
 # either DB-managed bookkeeping (irn, synced, sync_failed, synced_at,
@@ -182,29 +179,6 @@ def _extract_modified(record):
     return d, _truncate(raw_time, 20), combined
 
 
-def _extract_title(record):
-    grp = record.get("TitTitleType_grp")
-    entries = []
-    if isinstance(grp, dict):
-        grp = [grp]
-    if isinstance(grp, list):
-        for e in grp:
-            if isinstance(e, dict):
-                entries.append(
-                    (_clean(e.get("TitTitleType")), _clean(e.get("TitTitle")))
-                )
-    if not entries:
-        # flattened parallel-array shape
-        types = _as_list(record.get("TitTitleType"))
-        titles = _as_list(record.get("TitTitle"))
-        entries = list(zip_longest(types, titles))
-
-    main = next((t for (ty, t) in entries if ty == "Main" and t), None)
-    if main:
-        return main
-    return next((t for (_ty, t) in entries if t), None)
-
-
 def _extract_geography(record):
     """(latitude, longitude, geo_hierarchy) from SubGeographyRef_tab, which
     emu_client.resolve_references  resolves this. 
@@ -244,7 +218,7 @@ def record_to_staging_row(record):
         "time_modified": time_modified,
         "modified_at": modified_at,
         "record_type": _truncate(_scalar(record.get("ObjRecordType")), 100),
-        "title": _truncate(_extract_title(record), 1000),
+        "title": _truncate(_scalar(record.get("WebTitle")), 1000),
         "accession_number": _truncate(_scalar(record.get("AcqAccessionNumber")), 200),
         "credit_line": _truncate(_scalar(record.get("WebCreditLine")), 1000),
         "collection_description": _clean(_scalar(record.get("WebCollectionDescription"))),

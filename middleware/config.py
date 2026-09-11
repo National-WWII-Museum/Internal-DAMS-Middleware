@@ -11,6 +11,11 @@ EMU_PASSWORD = os.getenv("EMU_PASSWORD")
 
 EMU_BASE_URL = f"http://{EMU_HOST}:{EMU_PORT}"
 
+# --- NetX (DAM) ---
+NETX_BASE_URL = (os.getenv("NETX_BASE_URL") or "").rstrip("/")
+# .strip() guards against a trailing newline when the token is pasted into .env
+NETX_API_TOKEN = (os.getenv("NETX_API_TOKEN") or "").strip() or None
+
 # --- Sync-state database (remote MS SQL Server, via pyodbc) ---
 # Schema is owned/provisioned by the DBA - this app only reads/writes rows.
 DB_DRIVER = os.getenv("DB_DRIVER", "ODBC Driver 18 for SQL Server")

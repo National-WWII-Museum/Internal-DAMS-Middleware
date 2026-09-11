@@ -22,8 +22,7 @@ logger = logging.getLogger(__name__)
 PLACEHOLDER_FIELDS = [
     "data.AdmDateModified",
     "data.AdmTimeModified",
-    "data.TitTitleType_grp.TitTitle",
-    "data.TitTitleType_grp.TitTitleType",
+    "data.WebTitle",
     "data.irn",
     "data.AcqAccessionNumber",
     "data.WebOrganization_tab",

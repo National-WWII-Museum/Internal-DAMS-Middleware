@@ -15,3 +15,7 @@ DB_PASSWORD=your_sql_password
 DB_DRIVER=ODBC Driver 18 for SQL Server
 DB_ENCRYPT=yes
 DB_TRUST_SERVER_CERT=yes
+
+# NetX (DAM)
+NETX_BASE_URL=http://172.30.32.10
+NETX_API_TOKEN=your_netx_api_token
