@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<autotask>
+    <task id="," name=",">
+        <matchCriteria/>
+        <modifications/>
+        <repurpose/>
+        <exports/>
+        <notifications/>
+    </task>
+	<task id="EMu Test Sync" name="EMu Test Sync">
+		<matchCriteria type="and">
+			<criteria hour="15" interval="daily" minute="52" type="periodic"/>
+		</matchCriteria>
+		<customJob syncTaskNames="EMuByFilename"
+             className="com.netxposure.products.imageportal.module.metadata.sync.job.MetadataSyncJob"/>
+	</task>
+</autotask>
