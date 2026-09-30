@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadatasync version="1.0">
+  <sync type="scalar" log="debug" name="EMuByFilename" include_in_default="false">
+    <source name="EmuStaging" type="database"
+            jdbc="jdbc:sqlserver://XXX\NETX;databaseName=XXX;encrypt=false"
+            query="SELECT irn, file_name, title, alternate_title, collection_title, accession_number, credit_line, collection_description, donor_name, hometown, video_length, latitude, longitude, getty_geo_id, units, geography, topical_subjects, record_type, organizations, theaters, branches, local_terms, battle_events, person, honorees, powkia, asset_url, asset_type FROM dbo.emu_staging WHERE synced = 0 AND irn IS NOT NULL AND LTRIM(RTRIM(CAST(irn AS varchar(50)))) NOT IN ('', 'NULL')"
+            username="emusync" password="XXXXX">
+
+      <field name="irn"                   column="irn"/>
+      <field name="fileName"              column="file_name"/>
+      <field name="title"                 column="title"/>
+      <field name="alternateTitle"        column="alternate_title"/>
+      <field name="collectionTitle"       column="collection_title"/>
+      <field name="accessionNumber"       column="accession_number"/>
+      <field name="creditLine"            column="credit_line"/>
+      <field name="collectionDescription" column="collection_description"/>
+      <field name="donorName"             column="donor_name"/>
+      <field name="hometown"              column="hometown"/>
+      <field name="videoLength"           column="video_length"/>
+      <field name="latitude"              column="latitude"/>
+      <field name="longitude"             column="longitude"/>
+      <field name="gettyGeoId"            column="getty_geo_id"/>
+      <field name="unit"                  column="units"/>
+      <field name="geography"             column="geography"/>
+      <field name="topicalSubject"        column="topical_subjects"/>
+      <field name="objectType"            column="record_type"/>
+      <field name="organization"          column="organizations"/>
+      <field name="theater"               column="theaters"/>
+      <field name="branch"                column="branches"/>
+      <field name="localTerm"             column="local_terms"/>
+      <field name="battleEvent"           column="battle_events"/>
+      <field name="person"                column="person"/>
+      <field name="honorees"              column="honorees"/>
+      <field name="powkia"                column="powkia"/>
+      <field name="assetUrl"              column="asset_url"/>
+      <field name="assetType"             column="asset_type"/>
+
+      <callback type="success" sql="UPDATE dbo.emu_staging SET synced = 1, synced_at = SYSDATETIME() WHERE irn = %1"
+                param1="irn" frequency="row"/>
+      <callback type="failure" sql="UPDATE dbo.emu_staging SET sync_failed = 1 WHERE irn = %1"
+                param1="irn" frequency="row"/>
+    </source>
+
+    <destination type="DAM">
+      <records name="Match By IRN" type="asset">
+        <link field="irn" attribute="IRN"/>
+
+        <map field="title"                 attribute="Title"                  skip_null="true" skip_empty_string="true"/>
+        <map field="alternateTitle"        attribute="Alternate Title"        skip_null="true" skip_empty_string="true"/>
+        <map field="collectionTitle"       attribute="Collection Title"       skip_null="true" skip_empty_string="true"/>
+        <map field="accessionNumber"       attribute="Accession Number"       skip_null="true" skip_empty_string="true"/>
+        <map field="creditLine"            attribute="Credit Line"            skip_null="true" skip_empty_string="true"/>
+        <map field="collectionDescription" attribute="Collection Description" skip_null="true" skip_empty_string="true"/>
+        <map field="donorName"             attribute="Donor Name"             skip_null="true" skip_empty_string="true"/>
+        <map field="hometown"              attribute="Hometown"               skip_null="true" skip_empty_string="true"/>
+        <map field="videoLength"           attribute="Video Length"           skip_null="true" skip_empty_string="true"/>
+        <map field="latitude"              attribute="Latitude"               skip_null="true" skip_empty_string="true"/>
+        <map field="longitude"             attribute="Longitude"              skip_null="true" skip_empty_string="true"/>
+        <map field="gettyGeoId"            attribute="Getty Geographic ID"    skip_null="true" skip_empty_string="true"/>
+        <map field="unit"                  attribute="Unit"                   skip_null="true" skip_empty_string="true"/>
+        <map field="geography"             attribute="Geography"              skip_null="true" skip_empty_string="true"/>
+        <map field="topicalSubject"        attribute="Topical Subjects"       skip_null="true" skip_empty_string="true"/>
+        <map field="objectType"            attribute="Object Type"            skip_null="true" skip_empty_string="true"/>
+        <map field="organization"          attribute="Organization"           skip_null="true" skip_empty_string="true"/>
+        <map field="theater"               attribute="Theater"                skip_null="true" skip_empty_string="true"/>
+        <map field="branch"                attribute="Branch"                 skip_null="true" skip_empty_string="true"/>
+        <map field="localTerm"             attribute="Local Terms"            skip_null="true" skip_empty_string="true"/>
+        <map field="battleEvent"           attribute="Battles and Events"     skip_null="true" skip_empty_string="true"/>
+        <map field="person"                attribute="Person"                 skip_null="true" skip_empty_string="true"/>
+        <map field="honorees"              attribute="Honorees"               skip_null="true" skip_empty_string="true"/>
+        <map field="powkia"                attribute="POWKIA"                 skip_null="true" skip_empty_string="true"/>
+        <map field="assetUrl"              attribute="Asset URL"              skip_null="true" skip_empty_string="true"/>
+        <map field="assetType"             attribute="Asset Type"             skip_null="true" skip_empty_string="true"/>
+
+        <placeholder create="false" placeholderCategoryId="4584" nameField="fileName"/>
+      </records>
+    </destination>
+  </sync>
+</metadatasync>
