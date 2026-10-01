@@ -114,7 +114,7 @@ Content-Type: application/json
 2. Fetch the mapped fields for each changed record and resolve reference fields (e.g. `SubGeographyRef_tab` → `ethesaurus`).
 3. Map each record onto a `dbo.emu_staging` row (`middleware/mapping.py`) and upsert it — one row per `irn`. An already-synced record that changed is re-staged with `synced` / `sync_failed` reset to 0.
 4. A separate NetX push step reads `emu_staging` and sets `synced` / `sync_failed` / `synced_at`.
-5. Advance the watermark in `dbo.sync_state` (a single row, `id = 1`).
+5. Record the run in `dbo.sync_state` — each run appends a new row (`id = MAX(id) + 1`); the newest row's `last_sync_date` is the watermark for the next poll.
 
 **State management:** both tables live in a remote **MS SQL Server** database (`EmuStaging`), reached via `pyodbc` — `middleware/state.py`, connection built in `middleware/config.py` from the `DB_*` env vars. The schema is **owned and provisioned by the DBA**; this app only reads and writes rows (it does not create or alter tables). `middleware/mapping.WRITE_COLUMNS` and `emu_client.PLACEHOLDER_FIELDS` must stay in sync with the `emu_staging` column list.
 
