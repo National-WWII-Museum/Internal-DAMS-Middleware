@@ -73,6 +73,11 @@ class EMuAPIError(Exception):
     """
 
 
+class EMuNotFoundError(EMuAPIError):
+    """The requested module/irn doesn't exist (HTTP 404) - e.g. a reference
+    left dangling after its target record was deleted."""
+
+
 def get_token(timeout=10):
     try:
         resp = requests.post(
@@ -137,6 +142,8 @@ def get_record(module, irn, fields=None, headers=None, timeout=30):
             params=params,
             timeout=timeout,
         )
+        if resp.status_code == 404:
+            raise EMuNotFoundError(f"EMu record not found: {module}/{irn}")
         resp.raise_for_status()
         data = resp.json()
     except requests.exceptions.RequestException as e:
@@ -155,6 +162,10 @@ def resolve_references(record, headers=None, timeout=30):
     reference(s) (a single {id, @controls} dict, or a list of them for a
     '_tab' field) and replace the stub with just the mapped fields pulled
     from the target module's record.
+
+    A reference whose target no longer exists (404) is logged and dropped -
+    removed from a list, or set to None for a single reference - so one
+    dangling link doesn't fail the record. Any other lookup error still raises.
 
     Pass `headers` when resolving references for many records in a row (e.g.
     in a polling loop) so every lookup reuses one token instead of each one
@@ -176,10 +187,18 @@ def resolve_references(record, headers=None, timeout=30):
             if not isinstance(ref, dict) or "id" not in ref:
                 return ref
             module, irn = _parse_ref_id(ref["id"])
-            return get_record(module, irn, fields=target_fields, headers=headers, timeout=timeout)
+            try:
+                return get_record(module, irn, fields=target_fields, headers=headers, timeout=timeout)
+            except EMuNotFoundError:
+                logger.warning(
+                    "Record %s: %s points at missing %s/%s - skipping that reference",
+                    record.get("irn"), field_name, module, irn,
+                )
+                return None
 
         if isinstance(value, list):
-            record[field_name] = [_resolve_one(item) for item in value]
+            resolved = [_resolve_one(item) for item in value]
+            record[field_name] = [r for r in resolved if r is not None]
         else:
             record[field_name] = _resolve_one(value)
 
