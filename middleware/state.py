@@ -15,8 +15,8 @@ import pyodbc
 from .config import DB_CONNECTION_STRING
 from .mapping import WRITE_COLUMNS
 
-# dbo.sync_state holds exactly one row, updated in place.
-SYNC_STATE_ID = 1
+# dbo.sync_state is an append-only run log: every run inserts a new row
+# (id = MAX(id) + 1) and the newest row carries the current watermark.
 DEFAULT_SYNC_DATE = "2026-03-01"
 
 
@@ -26,15 +26,16 @@ def get_connection():
 
 # --- sync_state -------------------------------------------------------------
 
+_LATEST_SYNC_DATE = "SELECT TOP 1 last_sync_date FROM dbo.sync_state ORDER BY id DESC"
+
+
 def get_last_sync_date(conn, default=DEFAULT_SYNC_DATE):
     """The 'gte' watermark for the next poll, as a 'YYYY-MM-DD' string.
 
-    Reads dbo.sync_state.last_sync_date (row id=1); falls back to `default`
-    when that row is missing or the column is NULL.
+    Reads last_sync_date from the newest dbo.sync_state row (highest id);
+    falls back to `default` when the table is empty or the column is NULL.
     """
-    row = conn.execute(
-        "SELECT last_sync_date FROM sync_state WHERE id = ?", (SYNC_STATE_ID,)
-    ).fetchone()
+    row = conn.execute(_LATEST_SYNC_DATE).fetchone()
     if row and row[0] is not None:
         value = row[0]
         if isinstance(value, (datetime, date)):
@@ -46,37 +47,29 @@ def get_last_sync_date(conn, default=DEFAULT_SYNC_DATE):
 def has_synced_before(conn):
     """True once a real run has written a watermark - i.e. get_last_sync_date()
     is returning a prior run's date rather than its hardcoded default."""
-    row = conn.execute(
-        "SELECT last_sync_date FROM sync_state WHERE id = ?", (SYNC_STATE_ID,)
-    ).fetchone()
+    row = conn.execute(_LATEST_SYNC_DATE).fetchone()
     return bool(row and row[0] is not None)
 
 
-_SYNC_STATE_MERGE = """
-MERGE dbo.sync_state AS t
-USING (SELECT ? AS id) AS s
-  ON t.id = s.id
-WHEN MATCHED THEN UPDATE SET
-    last_sync_date = ?, last_run_at = ?, rows_processed = ?, notes = ?
-WHEN NOT MATCHED THEN
-    INSERT (id, last_sync_date, last_run_at, rows_processed, notes)
-    VALUES (?, ?, ?, ?, ?);
+# UPDLOCK/HOLDLOCK serialises concurrent runs so two can't pick the same id.
+_SYNC_STATE_INSERT = """
+INSERT INTO dbo.sync_state (id, last_sync_date, last_run_at, rows_processed, notes)
+SELECT COALESCE(MAX(id), 0) + 1, ?, ?, ?, ?
+FROM dbo.sync_state WITH (UPDLOCK, HOLDLOCK);
 """
 
 
 def update_sync_state(conn, last_sync_date, last_run_at, rows_processed, notes=None):
-    """Write the single sync_state row. `last_sync_date` may be a
+    """Append a new sync_state row for this run. `last_sync_date` may be a
     'YYYY-MM-DD' string or a date/datetime; `notes` is truncated to the
     column's 1000 chars."""
     if isinstance(last_sync_date, str):
         last_sync_date = datetime.strptime(last_sync_date, "%Y-%m-%d").date()
     if notes is not None:
         notes = str(notes)[:1000]
-    params = [
-        SYNC_STATE_ID, last_sync_date, last_run_at, rows_processed, notes,
-        SYNC_STATE_ID, last_sync_date, last_run_at, rows_processed, notes,
-    ]
-    conn.execute(_SYNC_STATE_MERGE, params)
+    conn.execute(
+        _SYNC_STATE_INSERT, [last_sync_date, last_run_at, rows_processed, notes]
+    )
     conn.commit()
 
 
