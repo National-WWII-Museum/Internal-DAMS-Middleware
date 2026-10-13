@@ -9,8 +9,8 @@ Rules (see project notes / schema comments):
   None so the downstream NetX push can skip nulls - an empty string that
   slipped through would blank out a NetX value.
 - Multi-value fields land in the format NetX writes for that attribute type:
-    * plain-text attributes  -> quoted CSV, '"a","b","c"' (every value quoted,
-      even a lone one; embedded double quotes doubled)     -> _pack_csv()
+    * plain-text attributes  -> comma+space joined, 'a, b, c' (NetX stores the
+      string verbatim, so no quoting)                      -> _pack_csv()
     * option-set attributes   -> bare comma, no space, 'a,b,c' (NetX renders
       option_set_item names, never quotes them)            -> _pack_optionset()
 - latitude / longitude are the (single-valued) coordinate fields off the
@@ -95,25 +95,12 @@ def _truncate(value, max_len):
 
 
 def _pack_csv(value):
-    """Pack a plain-text multi-value field as quoted CSV: '"a","b"'. Every
-    value quoted (matches how NetX writes type-1 attributes). Empty -> None."""
+    """Pack a plain-text multi-value field as one readable string: 'a, b'.
+    NetX stores plain-text attributes verbatim, so no quoting. Empty -> None."""
     items = _as_list(value)
     if not items:
         return None
-    return ",".join('"' + str(v).replace('"', '""') + '"' for v in items)
-
-
-def _pack_csv_bare_single(value):
-    """Like _pack_csv, but a lone value is written bare (no quotes) to match
-    existing single-valued plain-text data; 2+ values use quoted CSV.
-    Used for Geography, where every existing NetX row is a bare single value
-    but the EMu source (WebGeography_tab) is repeatable."""
-    items = _as_list(value)
-    if not items:
-        return None
-    if len(items) == 1:
-        return str(items[0])
-    return _pack_csv(items)
+    return ", ".join(str(v) for v in items)
 
 
 def _pack_optionset(value):
@@ -228,7 +215,7 @@ def record_to_staging_row(record):
         "latitude": latitude,
         "longitude": longitude,
         "units": _pack_csv(record.get("WebUnit_tab")),
-        "geography": _pack_csv_bare_single(record.get("WebGeography_tab")),
+        "geography": _pack_csv(record.get("WebGeography_tab")),
         "topical_subjects": _pack_csv(record.get("SubTopicalSubject_tab")),
         "object_types": _pack_csv(record.get("WebObjectType_tab")),
         "organizations": _pack_csv(record.get("WebOrganization_tab")),
