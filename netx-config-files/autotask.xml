@@ -11,7 +11,7 @@
 		<matchCriteria type="and">
 			<criteria hour="15" interval="daily" minute="52" type="periodic"/>
 		</matchCriteria>
-		<customJob syncTaskNames="EMuByFilename"
+		<customJob syncTaskNames="EMuByFilename,EMuHolding"
              className="com.netxposure.products.imageportal.module.metadata.sync.job.MetadataSyncJob"/>
 	</task>
 </autotask>
