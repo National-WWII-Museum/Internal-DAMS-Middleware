@@ -1,0 +1,41 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "NetX IRN check (single day)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "middleware.netx_irn_check.check_emu_irns",
+            "args": ["${input:date}"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "NetX IRN check (since date)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "middleware.netx_irn_check.check_emu_irns",
+            "args": ["${input:date}", "--since"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Polling",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "middleware.polling",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ],
+    "inputs": [
+        {
+            "id": "date",
+            "type": "promptString",
+            "description": "EMu modified date (YYYY-MM-DD)"
+        }
+    ]
+}
