@@ -55,7 +55,7 @@
       <field name="assetUrl"              column="asset_url"/>
       <field name="assetType"             column="asset_type"/>
 
-      <callback type="success" sql="UPDATE dbo.emu_staging SET synced = 1, synced_at = SYSDATETIME() WHERE irn = %1"
+      <callback type="success" sql="UPDATE dbo.emu_staging SET synced = 1, sync_failed = 0, synced_at = SYSDATETIME() WHERE irn = %1"
                 param1="irn" frequency="row"/>
       <callback type="failure" sql="UPDATE dbo.emu_staging SET sync_failed = 1 WHERE irn = %1"
                 param1="irn" frequency="row"/>
