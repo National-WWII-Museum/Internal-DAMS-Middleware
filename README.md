@@ -113,8 +113,9 @@ Content-Type: application/json
 1. Poll EMu (`ecatalogue`) for records where `AdmDateModified` is newer than the last successful sync run.
 2. Fetch the mapped fields for each changed record and resolve reference fields (e.g. `SubGeographyRef_tab` → `ethesaurus`).
 3. Map each record onto a `dbo.emu_staging` row (`middleware/mapping.py`) and upsert it — one row per `irn`. An already-synced record that changed is re-staged with `synced` / `sync_failed` reset to 0.
-4. A separate NetX push step reads `emu_staging` and sets `synced` / `sync_failed` / `synced_at`.
-5. Record the run in `dbo.sync_state` — each run appends a new row (`id = MAX(id) + 1`); the newest row's `last_sync_date` is the watermark for the next poll.
+4. **Route** (`middleware/routing.py`, run after polling): look up each `pending` / `holding` row's IRN in NetX (batched `getAssetsByQuery`). IRN found -> `status = 'ready'`; not found -> `status = 'holding'`. Holding rows are re-checked every run and promoted to `ready` as soon as someone puts the IRN on the asset in NetX. An `exists`-IRN canary aborts the run if NetX/Solr returns nothing (a Solr outage returns zero results, not an error).
+5. NetX DSS (`netx-config-files/`) runs two tasks off `emu_staging`: `EMuByFilename` (`status = 'ready'`, sets `synced` / `sync_failed` / `synced_at`, deletes finished rows) and `EMuHolding` (`status = 'holding'`, no callbacks - DSS reports success even on a zero-match, so `synced` means nothing for those rows).
+6. Record the run in `dbo.sync_state` — each run appends a new row (`id = MAX(id) + 1`); the newest row's `last_sync_date` is the watermark for the next poll.
 
 **State management:** both tables live in a remote **MS SQL Server** database (`EmuStaging`), reached via `pyodbc` — `middleware/state.py`, connection built in `middleware/config.py` from the `DB_*` env vars. The schema is **owned and provisioned by the DBA**; this app only reads and writes rows (it does not create or alter tables). `middleware/mapping.WRITE_COLUMNS` and `emu_client.PLACEHOLDER_FIELDS` must stay in sync with the `emu_staging` column list.
 

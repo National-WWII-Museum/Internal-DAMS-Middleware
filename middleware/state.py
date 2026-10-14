@@ -76,8 +76,10 @@ def update_sync_state(conn, last_sync_date, last_run_at, rows_processed, notes=N
 # --- emu_staging -----------------------------------------------------------
 
 _UPDATE_SET = ",\n    ".join(f"{c} = ?" for c in WRITE_COLUMNS)
-_INSERT_COLS = ", ".join(["irn", *WRITE_COLUMNS])
-_INSERT_PLACEHOLDERS = ", ".join(["?"] * (1 + len(WRITE_COLUMNS)))
+# Every upsert (re)queues the row as 'pending'; routing.py then flips it to
+# 'ready' or 'holding'. status is bookkeeping, so it is not in WRITE_COLUMNS.
+_INSERT_COLS = ", ".join(["irn", *WRITE_COLUMNS, "status"])
+_INSERT_PLACEHOLDERS = ", ".join(["?"] * (1 + len(WRITE_COLUMNS)) + ["'pending'"])
 
 _STAGING_MERGE = f"""
 MERGE dbo.emu_staging AS t
@@ -87,6 +89,7 @@ WHEN MATCHED THEN UPDATE SET
     {_UPDATE_SET},
     synced = 0,
     sync_failed = 0,
+    status = 'pending',
     updated_at = SYSUTCDATETIME()
 WHEN NOT MATCHED THEN
     INSERT ({_INSERT_COLS})
@@ -104,3 +107,40 @@ def upsert_staging_record(conn, irn, row):
     values = [row[c] for c in WRITE_COLUMNS]
     conn.execute(_STAGING_MERGE, [irn, *values, irn, *values])
     conn.commit()
+
+
+# --- routing status ----------------------------------------------------------
+
+STATUS_PENDING = "pending"   # staged, not routed yet - neither DSS task reads it
+STATUS_READY = "ready"       # NetX has an asset with this IRN
+STATUS_HOLDING = "holding"   # NetX has none yet; re-checked every run
+
+_STATUS_CHUNK = 500  # well under SQL Server's 2100-parameter limit
+
+
+def get_rows_to_route(conn):
+    """[(irn, status)] for every row routing.py should look at: new/changed
+    rows ('pending') plus parked rows ('holding') that need a re-check."""
+    rows = conn.execute(
+        "SELECT irn, status FROM dbo.emu_staging "
+        "WHERE status IN ('pending', 'holding') AND irn IS NOT NULL"
+    ).fetchall()
+    return [(r[0], r[1]) for r in rows]
+
+
+def set_status(conn, irns, status):
+    """Set `status` on the given IRNs (only rows still pending/holding, so a
+    concurrent change is never clobbered). Moving to 'ready' also resets
+    synced / sync_failed so the ready DSS task picks the row up - a row
+    promoted out of 'holding' may carry stale flags."""
+    irns = list(irns)
+    reset = ", synced = 0, sync_failed = 0" if status == STATUS_READY else ""
+    for i in range(0, len(irns), _STATUS_CHUNK):
+        chunk = irns[i:i + _STATUS_CHUNK]
+        marks = ", ".join(["?"] * len(chunk))
+        conn.execute(
+            f"UPDATE dbo.emu_staging SET status = ?{reset} "
+            f"WHERE irn IN ({marks}) AND status IN ('pending', 'holding')",
+            [status, *chunk],
+        )
+        conn.commit()

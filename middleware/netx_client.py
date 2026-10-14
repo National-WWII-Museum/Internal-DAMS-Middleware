@@ -130,3 +130,89 @@ def get_asset_filename(asset):
     if isinstance(file_data, dict) and file_data.get("name"):
         return file_data["name"]
     return asset.get("fileName") or asset.get("name") or ""
+
+
+# One OR-ed getAssetsByQuery covers IRN_BATCH_SIZE IRNs. One IRN can match
+# many assets (IRN 229430 -> 24), so a batch may return far more assets than
+# IRNs; results are paged IRN_PAGE_SIZE at a time.
+IRN_BATCH_SIZE = 25
+IRN_PAGE_SIZE = 500
+
+
+def irn_index_is_populated(session=None, timeout=DEFAULT_TIMEOUT):
+    """Canary for unattended runs: True if NetX returns at least one asset
+    that has any value in the IRN attribute.
+
+    A Solr outage makes getAssetsByQuery return zero results instead of an
+    error, so a zero-match is only trustworthy when this is True.
+    """
+    result = call(
+        "getAssetsByQuery",
+        [
+            {"query": [{"operator": "and", "exists": {"attribute": IRN_ATTRIBUTE}}]},
+            {"page": {"startIndex": 0, "size": 1}, "data": ["asset.id"]},
+        ],
+        session=session,
+        timeout=timeout,
+    )
+    return bool(result.get("results"))
+
+
+def find_existing_irns(irns, session=None, batch_size=IRN_BATCH_SIZE, timeout=DEFAULT_TIMEOUT):
+    """Return the set of IRNs (as stripped strings) from `irns` that have at
+    least one asset in NetX.
+
+    Batched: each call ORs `batch_size` exact-IRN clauses together. Raises
+    NetXAPIError on any failure so the caller never mistakes an error for
+    'not found'.
+    """
+    if session is None:
+        session = get_session()
+    wanted = [str(irn).strip() for irn in irns]
+    found = set()
+    for start in range(0, len(wanted), batch_size):
+        batch = set(wanted[start:start + batch_size])
+        query = [
+            {"operator": "or", "exact": {"attribute": IRN_ATTRIBUTE, "value": irn}}
+            for irn in sorted(batch)
+        ]
+        found |= _irns_matched_by_query(query, batch, session, timeout)
+    return found
+
+
+def _irns_matched_by_query(query, batch, session, timeout):
+    """Page through one OR-ed query and collect which IRNs of `batch` appear
+    in the returned assets' IRN attribute (guards against loose matches)."""
+    matched = set()
+    start = 0
+    while True:
+        result = call(
+            "getAssetsByQuery",
+            [
+                {"query": query},
+                {
+                    "page": {"startIndex": start, "size": IRN_PAGE_SIZE},
+                    "data": ["asset.id", "asset.attributes"],
+                },
+            ],
+            session=session,
+            timeout=timeout,
+        )
+        assets = result.get("results", [])
+        for asset in assets:
+            attributes = asset.get("attributes")
+            if attributes is None:
+                raise NetXAPIError(
+                    "getAssetsByQuery returned an asset without attributes; "
+                    "cannot tell which IRN it matched"
+                )
+            asset_irns = attributes.get(IRN_ATTRIBUTE, [])
+            if not isinstance(asset_irns, list):
+                asset_irns = [asset_irns]
+            for asset_irn in asset_irns:
+                asset_irn = str(asset_irn).strip()
+                if asset_irn in batch:
+                    matched.add(asset_irn)
+        if matched == batch or len(assets) < IRN_PAGE_SIZE:
+            return matched
+        start += IRN_PAGE_SIZE
