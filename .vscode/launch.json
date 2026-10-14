@@ -29,6 +29,35 @@
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "Polling single day (pick date)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "middleware.polling_single_day",
+            "args": ["${input:date}"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Polling single day (next unsynced day)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "middleware.polling_single_day",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Polling date range (pick dates)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "middleware.polling_date_range",
+            "args": ["${input:startDate}", "${input:endDate}"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ],
     "inputs": [
@@ -36,6 +65,16 @@
             "id": "date",
             "type": "promptString",
             "description": "EMu modified date (YYYY-MM-DD)"
+        },
+        {
+            "id": "startDate",
+            "type": "promptString",
+            "description": "EMu modified start date, inclusive (YYYY-MM-DD)"
+        },
+        {
+            "id": "endDate",
+            "type": "promptString",
+            "description": "EMu modified end date, inclusive (YYYY-MM-DD)"
         }
     ]
 }
