@@ -175,4 +175,49 @@
     </destination>
   </sync>
 
+  <!--
+    ================= VALUELOOKUPS (run on import, see autotask.xml) =================
+    Each runs once for a newly imported asset. ASSET_FILE_BASENAME is the file name WITHOUT
+    its extension, e.g. '2019.123.4_001'. The query strips a trailing '_<digits>' suffix
+    (the book/multi-image convention) to get the accession number, '2019.123.4'.
+    Written so %1 appears only once (sub-select), because it is unclear whether DSS
+    substitutes repeated placeholders. A valuelookup query must return ONE row, ONE column.
+    DRAFT - not yet run. Test on the sandbox first.
+  -->
+
+  <!-- Sets Accession Number from the file name. No staging row needed. -->
+  <sync type="valuelookup" log="debug" name="EMuAccessionFromFilename">
+    <source name="EmuStaging" type="database"
+            jdbc="jdbc:sqlserver://XXX\NETX;databaseName=XXX;encrypt=false"
+            query="SELECT CASE WHEN p &gt; 1 THEN CASE WHEN SUBSTRING(n, LEN(n) - p + 2, p - 1) NOT LIKE '%[^0-9]%' THEN LEFT(n, LEN(n) - p) ELSE n END ELSE n END AS accession FROM (SELECT n, CHARINDEX('_', REVERSE(n)) AS p FROM (SELECT %1 AS n) a) b"
+            username="emusync" password="XXXXX">
+      <param type="ASSET_FILE_BASENAME" position="1"/>
+      <field name="Accession" column="accession"/>
+    </source>
+    <destination type="DAM">
+      <records name="Accession Number from filename" type="asset">
+        <map field="Accession" attribute="Accession Number"/>
+      </records>
+    </destination>
+  </sync>
+
+  <!-- Sets IRN by looking the accession number up in emu_staging. Replaces the manual CSV step.
+       If there is no staging row yet, or MORE THAN ONE record shares the accession
+       number (accession numbers are NOT unique across EMu), HAVING COUNT(*) = 1 returns no row and
+       nothing is set - the asset stays without an IRN rather than getting the wrong one. -->
+  <sync type="valuelookup" log="debug" name="EMuIrnFromFilename">
+    <source name="EmuStaging" type="database"
+            jdbc="jdbc:sqlserver://XXX\NETX;databaseName=XXX;encrypt=false"
+            query="SELECT MAX(s.irn) AS irn FROM dbo.emu_staging s JOIN (SELECT CASE WHEN p &gt; 1 THEN CASE WHEN SUBSTRING(n, LEN(n) - p + 2, p - 1) NOT LIKE '%[^0-9]%' THEN LEFT(n, LEN(n) - p) ELSE n END ELSE n END AS accession FROM (SELECT n, CHARINDEX('_', REVERSE(n)) AS p FROM (SELECT %1 AS n) a) b) k ON s.accession_number = k.accession HAVING COUNT(*) = 1"
+            username="emusync" password="XXXXX">
+      <param type="ASSET_FILE_BASENAME" position="1"/>
+      <field name="IRN" column="irn"/>
+    </source>
+    <destination type="DAM">
+      <records name="IRN from filename" type="asset">
+        <map field="IRN" attribute="IRN"/>
+      </records>
+    </destination>
+  </sync>
+
 </metadatasync>

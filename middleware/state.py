@@ -114,18 +114,54 @@ def upsert_staging_record(conn, irn, row):
 STATUS_PENDING = "pending"   # staged, not routed yet - neither DSS task reads it
 STATUS_READY = "ready"       # NetX has an asset with this IRN
 STATUS_HOLDING = "holding"   # NetX has none yet; re-checked every run
+STATUS_MISSING_FILE = "missing_file"  # no longer set by routing; kept so rows already parked stay valid
 
 _STATUS_CHUNK = 500  # well under SQL Server's 2100-parameter limit
 
 
 def get_rows_to_route(conn):
-    """[(irn, status)] for every row routing.py should look at: new/changed
-    rows ('pending') plus parked rows ('holding') that need a re-check."""
+    """[(irn, status)] for every row routing.py should look up in NetX: new /
+    changed rows ('pending') plus parked rows ('holding') that need a
+    re-check. Every row is looked up, with or without a file_name - records
+    for brand-new items have no EMu file yet but still need a NetX asset."""
     rows = conn.execute(
         "SELECT irn, status FROM dbo.emu_staging "
         "WHERE status IN ('pending', 'holding') AND irn IS NOT NULL"
     ).fetchall()
     return [(r[0], r[1]) for r in rows]
+
+
+def _requeue(conn, where, params=()):
+    cur = conn.execute(
+        "UPDATE dbo.emu_staging "
+        "SET status = 'pending', synced = 0, sync_failed = 0 "
+        f"WHERE {where}",
+        list(params),
+    )
+    n = cur.rowcount
+    conn.commit()
+    return n
+
+
+def requeue_by_status(conn, status):
+    """Put every row currently in `status` back to 'pending'."""
+    return _requeue(conn, "status = ?", [status])
+
+
+def requeue_failed(conn):
+    """Put 'ready' rows whose DSS write failed back to 'pending'."""
+    return _requeue(conn, "status = 'ready' AND sync_failed = 1")
+
+
+def requeue_irns(conn, irns):
+    """Put specific IRNs (any status) back to 'pending'."""
+    irns = list(irns)
+    total = 0
+    for i in range(0, len(irns), _STATUS_CHUNK):
+        chunk = irns[i:i + _STATUS_CHUNK]
+        marks = ", ".join(["?"] * len(chunk))
+        total += _requeue(conn, f"irn IN ({marks})", chunk)
+    return total
 
 
 def set_status(conn, irns, status):

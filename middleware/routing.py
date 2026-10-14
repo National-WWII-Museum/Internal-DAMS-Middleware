@@ -11,6 +11,9 @@ NetX already has an asset carrying its IRN.
                         NetX; every run re-checks it and promotes it to
                         'ready' as soon as the IRN shows up.
 
+Every pending / holding row is looked up, whether or not it has a file_name
+(records for brand-new items have no EMu file yet).
+
 Run it after polling.py and before the NetX DSS auto-task fires:
 
     python -m middleware.routing

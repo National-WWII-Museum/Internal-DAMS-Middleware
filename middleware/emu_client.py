@@ -186,6 +186,59 @@ def resolve_references(record, headers=None, timeout=30):
     return record
 
 
+def find_irns_by_accession(accession, module="ecatalogue", headers=None, timeout=30):
+    """IRNs (as strings) of the `module` records whose AcqAccessionNumber is
+    exactly `accession`. EMu's 'exact' operator matches the whole value,
+    case-insensitively.
+
+    Accession numbers are NOT unique in EMu, so callers must treat anything
+    other than exactly one IRN as 'do not tag'. At most 50 matches are read;
+    two or more is already ambiguous.
+
+    Pass `headers` (from get_auth_headers()) when looking up many accessions
+    in a row, so they share one login - see get_record().
+    """
+    if headers is None:
+        headers = get_auth_headers(timeout=timeout)
+    filter_query = {
+        "AND": [
+            {"data.AcqAccessionNumber": {"exact": {"value": accession}}}
+        ]
+    }
+    params = {
+        "filter": json.dumps(filter_query),
+        "limit": 50,
+        "select": "data.irn,data.AcqAccessionNumber",
+    }
+    try:
+        resp = requests.get(
+            f"{config.EMU_BASE_URL}/{config.EMU_TENANT}/{module}",
+            headers=headers,
+            params=params,
+            timeout=timeout,
+        )
+        if resp.status_code != 200:
+            logger.error(
+                "EMu returned %s for accession %r in %s: %s",
+                resp.status_code, accession, module, resp.text[:1000],
+            )
+        resp.raise_for_status()
+        data = resp.json()
+    except requests.exceptions.RequestException as e:
+        raise EMuAPIError(f"EMu accession search failed for {accession!r}: {e}") from e
+    except ValueError as e:
+        raise EMuAPIError(
+            f"EMu returned an unparseable response for accession {accession!r}: {e}"
+        ) from e
+
+    irns = []
+    for m in data.get("matches", []):
+        irn = extract_irn(m.get("data", {}))
+        if irn:
+            irns.append(str(irn))
+    return irns
+
+
 def search_modified_on(module, date, fields=None, page_size=500, timeout=30):
     """
     Search an EMu module (e.g. 'ecatalogue') for records with

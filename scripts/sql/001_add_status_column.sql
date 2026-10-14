@@ -3,6 +3,7 @@
 --   ready   : NetX already has an asset with this IRN -> EMuByFilename DSS task syncs it.
 --   holding : NetX has no asset with this IRN yet -> EMuHolding DSS task keeps retrying;
 --             routing.py promotes it to 'ready' once the IRN appears in NetX.
+--   missing_file : no file_name on the row (see 002_add_missing_file_status.sql).
 --
 -- Idempotent. Existing rows become 'pending' and are routed on the next
 -- `python -m middleware.routing` run.
@@ -14,9 +15,9 @@ GO
 IF COL_LENGTH('dbo.emu_staging', 'status') IS NULL
 BEGIN
     ALTER TABLE dbo.emu_staging
-        ADD status VARCHAR(10) NOT NULL
+        ADD status VARCHAR(20) NOT NULL
             CONSTRAINT DF_emu_staging_status DEFAULT 'pending'
-            CONSTRAINT CK_emu_staging_status CHECK (status IN ('pending', 'ready', 'holding'));
+            CONSTRAINT CK_emu_staging_status CHECK (status IN ('pending', 'ready', 'holding', 'missing_file'));
 END
 GO
 

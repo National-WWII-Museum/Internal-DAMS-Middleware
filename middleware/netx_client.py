@@ -4,6 +4,7 @@ Reusable functions for talking to the NetX JSON-RPC API:
 authentication, making a call, and looking assets up by EMu IRN.
 """
 import logging
+import time
 
 import requests
 
@@ -216,3 +217,50 @@ def _irns_matched_by_query(query, batch, session, timeout):
         if matched == batch or len(assets) < IRN_PAGE_SIZE:
             return matched
         start += IRN_PAGE_SIZE
+
+
+def find_recent_assets_without_irn(days, session=None, page_size=100, timeout=DEFAULT_TIMEOUT):
+    """Assets imported in the last `days` days that have no value in the IRN
+    attribute (used by sweep.py). Returns the raw asset dicts (id, base, file).
+
+    All pages are read BEFORE the caller changes anything: tagging an asset
+    removes it from this result set, which would shift later pages and skip
+    assets if the caller wrote while paging.
+    """
+    if session is None:
+        session = get_session()
+    since_ms = int((time.time() - days * 86400) * 1000)
+    query = [
+        {"operator": "and", "range": {
+            "field": "importDate", "min": str(since_ms), "max": None,
+            "includeMin": True, "includeMax": True,
+        }},
+        {"operator": "not", "exists": {"attribute": IRN_ATTRIBUTE}},
+    ]
+    assets = []
+    start = 0
+    while True:
+        result = call(
+            "getAssetsByQuery",
+            [
+                {"query": query},
+                {
+                    "page": {"startIndex": start, "size": page_size},
+                    "data": ["asset.id", "asset.base", "asset.file"],
+                },
+            ],
+            session=session,
+            timeout=timeout,
+        )
+        page = result.get("results", [])
+        assets.extend(page)
+        if len(page) < page_size:
+            return assets
+        start += page_size
+
+
+def set_asset_attributes(asset_id, attributes, session=None, timeout=DEFAULT_TIMEOUT):
+    """Update custom attribute values on one asset, e.g.
+    set_asset_attributes(123, {"IRN": ["229430"]}). Each value is a list.
+    See https://developer.netx.net/#setassetattributes"""
+    return call("setAssetAttributes", [asset_id, attributes], session=session, timeout=timeout)
