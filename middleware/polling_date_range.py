@@ -108,9 +108,11 @@ def search_modified_between(module, start_date, end_date, fields=None, page_size
     return all_records
 
 
-def run(start_date, end_date):
+def run(start_date, end_date, update_watermark=True):
     """
     start_date, end_date: "YYYY-MM-DD" strings, both inclusive.
+    update_watermark: False leaves dbo.sync_state alone, so a test or
+    one-off window doesn't move where scheduled polling picks up.
     """
     run_at = datetime.now(timezone.utc).replace(tzinfo=None)
     rows_processed = 0
@@ -145,10 +147,13 @@ def run(start_date, end_date):
         logger.info("Staged %d record(s)", rows_processed)
 
         # Step 3: record the last day of the range as the watermark
-        state.update_sync_state(
-            conn, end_date, run_at, rows_processed,
-            notes=f"ok (range {start_date}..{end_date}): {rows_processed} record(s)",
-        )
+        if update_watermark:
+            state.update_sync_state(
+                conn, end_date, run_at, rows_processed,
+                notes=f"ok (range {start_date}..{end_date}): {rows_processed} record(s)",
+            )
+        else:
+            logger.info("Watermark left unchanged (update_watermark=False)")
 
     except Exception:
         logger.exception(

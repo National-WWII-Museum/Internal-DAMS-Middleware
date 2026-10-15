@@ -9,6 +9,9 @@ One command that runs the whole EMu -> NetX staging pipeline in order:
     python -m middleware.pipeline                 # all three steps
     python -m middleware.pipeline --skip-polling  # sweep + routing only
     python -m middleware.pipeline --days 30       # sweep look-back (default 14)
+    python -m middleware.pipeline --from-date 2026-06-03 [--to-date 2026-06-03]
+        # poll a fixed EMu modified-date window (both inclusive) instead of
+        # since-last-run; the watermark is NOT moved. For testing/backfills.
 
 Order matters: sweep must run before routing so a freshly uploaded asset
 has its IRN by the time routing looks for it. The NetX DSS task
@@ -21,9 +24,10 @@ Log: data/pipeline.log. Run from the project folder ("Start in").
 import argparse
 import logging
 import sys
+from datetime import datetime
 from pathlib import Path
 
-from . import polling, routing, sweep
+from . import polling, polling_date_range, routing, sweep
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +49,19 @@ def _step(name, func):
     return result
 
 
-def run(days=sweep.DEFAULT_DAYS, skip_polling=False):
-    """Run the steps in order; raises StepFailed on the first failure."""
-    if not skip_polling:
+def run(days=sweep.DEFAULT_DAYS, skip_polling=False, from_date=None, to_date=None):
+    """Run the steps in order; raises StepFailed on the first failure.
+
+    from_date/to_date ("YYYY-MM-DD", inclusive) swap normal polling for a
+    fixed-window poll that leaves the watermark alone.
+    """
+    if skip_polling:
+        pass
+    elif from_date:
+        end = to_date or from_date
+        _step(f"polling {from_date}..{end}",
+              lambda: polling_date_range.run(from_date, end, update_watermark=False))
+    else:
         _step("polling", polling.run)
     _step("sweep", lambda: sweep.run(days=days, apply=True))
     _step("routing", routing.run)
@@ -70,9 +84,27 @@ if __name__ == "__main__":
                         help=f"sweep look-back in days (default {sweep.DEFAULT_DAYS})")
     parser.add_argument("--skip-polling", action="store_true",
                         help="skip the EMu polling step")
+    parser.add_argument("--from-date", metavar="YYYY-MM-DD",
+                        help="poll this EMu modified-date window instead of since-last-run "
+                             "(watermark not moved)")
+    parser.add_argument("--to-date", metavar="YYYY-MM-DD",
+                        help="end of the --from-date window, inclusive (default: same day)")
     args = parser.parse_args()
+    if args.to_date and not args.from_date:
+        parser.error("--to-date needs --from-date")
+    for d in (args.from_date, args.to_date):
+        if d:
+            try:
+                datetime.strptime(d, "%Y-%m-%d")
+            except ValueError:
+                parser.error(f"bad date {d!r}, expected YYYY-MM-DD")
+    if args.from_date and args.to_date and args.from_date > args.to_date:
+        parser.error("--from-date is after --to-date")
+    if args.skip_polling and args.from_date:
+        parser.error("--skip-polling and --from-date can't be combined")
     try:
-        run(days=args.days, skip_polling=args.skip_polling)
+        run(days=args.days, skip_polling=args.skip_polling,
+            from_date=args.from_date, to_date=args.to_date)
     except StepFailed as e:
         logger.error("Pipeline STOPPED: step '%s' failed; later steps were not run", e)
         sys.exit(1)
