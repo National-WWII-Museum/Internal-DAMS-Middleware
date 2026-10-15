@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 # NetX attribute that holds the EMu IRN - the same one syncedMetadata.xml
 # links on (<link field="irn" attribute="IRN"/>).
 IRN_ATTRIBUTE = "IRN"
+ACCESSION_ATTRIBUTE = "Accession Number"
 
 # (connect, read) seconds
 DEFAULT_TIMEOUT = (15, 60)
@@ -221,7 +222,8 @@ def _irns_matched_by_query(query, batch, session, timeout):
 
 def find_recent_assets_without_irn(days, session=None, page_size=100, timeout=DEFAULT_TIMEOUT):
     """Assets imported in the last `days` days that have no value in the IRN
-    attribute (used by sweep.py). Returns the raw asset dicts (id, base, file).
+    attribute (used by sweep.py). Returns the raw asset dicts (id, base,
+    file, attributes).
 
     All pages are read BEFORE the caller changes anything: tagging an asset
     removes it from this result set, which would shift later pages and skip
@@ -246,7 +248,7 @@ def find_recent_assets_without_irn(days, session=None, page_size=100, timeout=DE
                 {"query": query},
                 {
                     "page": {"startIndex": start, "size": page_size},
-                    "data": ["asset.id", "asset.base", "asset.file"],
+                    "data": ["asset.id", "asset.base", "asset.file", "asset.attributes"],
                 },
             ],
             session=session,

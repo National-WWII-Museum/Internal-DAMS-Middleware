@@ -14,7 +14,12 @@ File name -> accession number: the extension is dropped, then one trailing
 '2019.123.4_001.jpg' -> '2019.123.4'. This mirrors the EMuAccessionFromFilename
 and EMuIrnFromFilename valuelookups in netx-config-files/syncedMetadata.xml;
 this job catches anything those did not (EMu record imported after the upload,
-a lookup that failed, etc.). Anything it cannot place is logged and left alone:
+a lookup that failed, etc.).
+
+If the asset's Accession Number attribute already has a value it is used
+instead of the file name, so a misnamed upload can be fixed by correcting
+that field in NetX - the next sweep then finds its IRN. Anything it cannot
+place is logged and left alone:
 
     no EMu record  -> the record may not exist in EMu yet; retried next sweep
     several records -> accession numbers are not unique in EMu; fix by hand
@@ -56,6 +61,17 @@ def basename_of(asset):
     return asset.get("name") or ""
 
 
+def accession_attribute_of(asset):
+    """The asset's Accession Number attribute value ('' if unset)."""
+    values = (asset.get("attributes") or {}).get(netx_client.ACCESSION_ATTRIBUTE) or []
+    if not isinstance(values, list):
+        values = [values]
+    for value in values:
+        if str(value).strip():
+            return str(value).strip()
+    return ""
+
+
 def run(days=DEFAULT_DAYS, apply=False):
     """Sweep recent IRN-less assets. Returns a dict of counts."""
     session = netx_client.get_session()
@@ -85,10 +101,14 @@ def run(days=DEFAULT_DAYS, apply=False):
     for asset in assets:
         asset_id = asset.get("id")
         basename = basename_of(asset)
-        accession = accession_from_basename(basename) if basename else ""
+        # a value in the Accession Number field (e.g. hand-corrected after a
+        # misnamed upload) wins over the file name
+        accession = accession_attribute_of(asset) or (
+            accession_from_basename(basename) if basename else ""
+        )
         if not accession:
             counts["no_accession"] += 1
-            logger.warning("Asset %s has no usable file name; skipped", asset_id)
+            logger.warning("Asset %s has no Accession Number or usable file name; skipped", asset_id)
             continue
 
         if accession not in lookups:
@@ -127,7 +147,7 @@ def run(days=DEFAULT_DAYS, apply=False):
 
     logger.info(
         "Sweep done: %(checked)d checked, %(tagged)d tagged, %(no_emu_record)d no EMu record, "
-        "%(ambiguous)d ambiguous, %(no_accession)d no file name, %(errors)d error(s)",
+        "%(ambiguous)d ambiguous, %(no_accession)d no accession, %(errors)d error(s)",
         counts,
     )
     return counts
