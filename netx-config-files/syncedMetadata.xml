@@ -1,10 +1,113 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <metadatasync version="1.0">
+
+  <!--
+    Two DSS tasks read the same dbo.emu_staging table, split by its `status`
+    column (set by middleware/routing.py):
+
+      EMuByFilename  status = 'ready'    NetX already has an asset with the IRN.
+                                         Written once; synced rows are deleted at the end.
+      EMuHolding     status = 'holding'  NetX had no asset with the IRN when last checked.
+                                         Retried every run, expected to zero-match until
+                                         someone adds the IRN in NetX. NO synced filter and
+                                         NO callbacks: DSS reports success even on a
+                                         zero-match, so synced=1 would mean nothing here.
+                                         Rows leave 'holding' only via routing.py.
+
+    The two <sync> blocks are identical apart from the query, the callbacks and the
+    task name. Keep their <field>/<map> lists in step when attributes change.
+    Task names must match syncTaskNames in autotask.xml exactly.
+  -->
+
+  <!-- ================= READY ================= -->
   <sync type="scalar" log="debug" name="EMuByFilename" include_in_default="false">
     <source name="EmuStaging" type="database"
-            jdbc="jdbc:sqlserver://XXX\NETX;databaseName=XXX;encrypt=false"
-            query="SELECT irn, file_name, title, alternate_title, collection_title, accession_number, credit_line, collection_description, donor_name, hometown, video_length, latitude, longitude, getty_geo_id, units, geography, topical_subjects, record_type, organizations, theaters, branches, local_terms, battle_events, person, honorees, powkia, asset_url, asset_type FROM dbo.emu_staging WHERE synced = 0 AND irn IS NOT NULL AND LTRIM(RTRIM(CAST(irn AS varchar(50)))) NOT IN ('', 'NULL')"
-            username="emusync" password="XXXXX">
+            jdbc="jdbc:sqlserver://172.30.32.16\NETX;databaseName=EmuStaging;encrypt=false"
+            query="SELECT irn, file_name, title, alternate_title, collection_title, accession_number, credit_line, collection_description, donor_name, hometown, video_length, latitude, longitude, getty_geo_id, units, geography, topical_subjects, record_type, organizations, theaters, branches, local_terms, battle_events, person, honorees, powkia, asset_url, asset_type FROM dbo.emu_staging WHERE status = 'ready' AND synced = 0 AND irn IS NOT NULL AND LTRIM(RTRIM(CAST(irn AS varchar(50)))) NOT IN ('', 'NULL')"
+            username="emusync" password="ZZZ">
+
+      <field name="irn"                   column="irn"/>
+      <field name="fileName"              column="file_name"/>
+      <field name="title"                 column="title"/>
+      <field name="alternateTitle"        column="alternate_title"/>
+      <field name="collectionTitle"       column="collection_title"/>
+      <field name="accessionNumber"       column="accession_number"/>
+      <field name="creditLine"            column="credit_line"/>
+      <field name="collectionDescription" column="collection_description"/>
+      <field name="donorName"             column="donor_name"/>
+      <field name="hometown"              column="hometown"/>
+      <field name="videoLength"           column="video_length"/>
+      <field name="latitude"              column="latitude"/>
+      <field name="longitude"             column="longitude"/>
+      <field name="gettyGeoId"            column="getty_geo_id"/>
+      <field name="unit"                  column="units"/>
+      <field name="geography"             column="geography"/>
+      <field name="topicalSubject"        column="topical_subjects"/>
+      <field name="objectType"            column="record_type"/>
+      <field name="organization"          column="organizations"/>
+      <field name="theater"               column="theaters"/>
+      <field name="branch" column="branches"/>
+      <field name="localTerm"             column="local_terms"/>
+      <field name="battleEvent"           column="battle_events"/>
+      <field name="person"                column="person"/>
+      <field name="honorees"              column="honorees"/>
+      <field name="powkia"                column="powkia"/>
+      <field name="assetUrl"              column="asset_url"/>
+      <field name="assetType"             column="asset_type"/>
+
+      <callback type="success" sql="UPDATE dbo.emu_staging SET synced = 1, sync_failed = 0, synced_at = SYSDATETIME() WHERE irn = %1"
+                param1="irn" frequency="row"/>
+      <callback type="failure" sql="UPDATE dbo.emu_staging SET sync_failed = 1 WHERE irn = %1"
+                param1="irn" frequency="row"/>
+      <!-- Clear finished rows. status='ready' guard: a holding row must never be deleted. -->
+      <callback type="success" sql="DELETE FROM dbo.emu_staging WHERE synced = 1 AND sync_failed = 0 AND status = 'ready'"
+                frequency="end"/>
+    </source>
+
+    <destination type="DAM">
+      <records name="Match By IRN" type="asset">
+        <link field="irn" attribute="IRN"/>
+
+        <map field="title"                 attribute="Title"                  skip_null="true" skip_empty_string="true"/>
+        <map field="alternateTitle"        attribute="Alternate Title"        skip_null="true" skip_empty_string="true"/>
+        <map field="collectionTitle"       attribute="Collection Title"       skip_null="true" skip_empty_string="true"/>
+        <map field="accessionNumber"       attribute="Accession Number"       skip_null="true" skip_empty_string="true"/>
+        <map field="creditLine"            attribute="Credit Line"            skip_null="true" skip_empty_string="true"/>
+        <map field="collectionDescription" attribute="Collection Description" skip_null="true" skip_empty_string="true"/>
+        <map field="donorName"             attribute="Donor Name"             skip_null="true" skip_empty_string="true"/>
+        <map field="hometown"              attribute="Hometown"               skip_null="true" skip_empty_string="true"/>
+        <!-- <map field="videoLength"           attribute="Video Length"           skip_null="true" skip_empty_string="true"/> -->
+        <map field="latitude"              attribute="Latitude"               skip_null="true" skip_empty_string="true"/>
+        <map field="longitude"             attribute="Longitude"              skip_null="true" skip_empty_string="true"/>
+        <map field="gettyGeoId"            attribute="Getty Geographic ID"    skip_null="true" skip_empty_string="true"/>
+        <!-- <map field="geography"             attribute="Geography"              skip_null="true" skip_empty_string="true"/> -->
+        <!-- <map field="topicalSubject"        attribute="Topical Subjects"       skip_null="true" skip_empty_string="true"/> -->
+        <!-- <map field="localTerm"             attribute="Local Terms"            skip_null="true" skip_empty_string="true"/> -->
+        <!-- <map field="battleEvent"           attribute="Battles and Events"     skip_null="true" skip_empty_string="true"/> -->
+        <map field="person"                attribute="Person"                 skip_null="true" skip_empty_string="true"/>
+        <map field="honorees"              attribute="Honorees"               skip_null="true" skip_empty_string="true"/>
+        <map field="powkia"                attribute="POWKIA"                 skip_null="true" skip_empty_string="true"/>
+        <map field="assetUrl"              attribute="Asset URL"              skip_null="true" skip_empty_string="true"/>
+        <map field="assetType"             attribute="Asset Type"             skip_null="true" skip_empty_string="true"/>
+        
+        <map field="organization"          attribute="Organization-test"           skip_null="true" skip_empty_string="true"/>
+        <map field="objectType"            attribute="Object Type-test"       skip_null="true" skip_empty_string="true"/>
+        <map field="branch"                attribute="Branch-TEST"                 skip_null="true" skip_empty_string="true"/>
+        <map field="objectType"            attribute="Record Type"                 skip_null="true" skip_empty_string="true"/>
+        <map field="unit"                  attribute="Unit-test"                   skip_null="true" skip_empty_string="true"/>
+        <map field="theater"               attribute="Theater-test"                skip_null="true" skip_empty_string="true"/> 
+
+        <placeholder create="false" placeholderCategoryId="4584" nameField="fileName"/>
+      </records>
+    </destination>
+  </sync>
+
+  <!-- ================= HOLDING ================= -->
+  <sync type="scalar" log="debug" name="EMuHolding" include_in_default="false">
+    <source name="EmuStaging" type="database"
+            jdbc="jdbc:sqlserver://172.30.32.16\NETX;databaseName=EmuStaging;encrypt=false"
+            query="SELECT irn, file_name, title, alternate_title, collection_title, accession_number, credit_line, collection_description, donor_name, hometown, video_length, latitude, longitude, getty_geo_id, units, geography, topical_subjects, record_type, organizations, theaters, branches, local_terms, battle_events, person, honorees, powkia, asset_url, asset_type FROM dbo.emu_staging WHERE status = 'holding' AND irn IS NOT NULL AND LTRIM(RTRIM(CAST(irn AS varchar(50)))) NOT IN ('', 'NULL')"
+            username="emusync" password="ZZZ">
 
       <field name="irn"                   column="irn"/>
       <field name="fileName"              column="file_name"/>
@@ -35,14 +138,11 @@
       <field name="assetUrl"              column="asset_url"/>
       <field name="assetType"             column="asset_type"/>
 
-      <callback type="success" sql="UPDATE dbo.emu_staging SET synced = 1, synced_at = SYSDATETIME() WHERE irn = %1"
-                param1="irn" frequency="row"/>
-      <callback type="failure" sql="UPDATE dbo.emu_staging SET sync_failed = 1 WHERE irn = %1"
-                param1="irn" frequency="row"/>
+      <!-- Intentionally no callbacks - see the note at the top of this file. -->
     </source>
 
     <destination type="DAM">
-      <records name="Match By IRN" type="asset">
+      <records name="Match By IRN (holding retry)" type="asset">
         <link field="irn" attribute="IRN"/>
 
         <map field="title"                 attribute="Title"                  skip_null="true" skip_empty_string="true"/>
@@ -57,13 +157,8 @@
         <map field="latitude"              attribute="Latitude"               skip_null="true" skip_empty_string="true"/>
         <map field="longitude"             attribute="Longitude"              skip_null="true" skip_empty_string="true"/>
         <map field="gettyGeoId"            attribute="Getty Geographic ID"    skip_null="true" skip_empty_string="true"/>
-        <map field="unit"                  attribute="Unit"                   skip_null="true" skip_empty_string="true"/>
         <map field="geography"             attribute="Geography"              skip_null="true" skip_empty_string="true"/>
         <map field="topicalSubject"        attribute="Topical Subjects"       skip_null="true" skip_empty_string="true"/>
-        <map field="objectType"            attribute="Object Type"            skip_null="true" skip_empty_string="true"/>
-        <map field="organization"          attribute="Organization"           skip_null="true" skip_empty_string="true"/>
-        <map field="theater"               attribute="Theater"                skip_null="true" skip_empty_string="true"/>
-        <map field="branch"                attribute="Branch"                 skip_null="true" skip_empty_string="true"/>
         <map field="localTerm"             attribute="Local Terms"            skip_null="true" skip_empty_string="true"/>
         <map field="battleEvent"           attribute="Battles and Events"     skip_null="true" skip_empty_string="true"/>
         <map field="person"                attribute="Person"                 skip_null="true" skip_empty_string="true"/>
@@ -72,8 +167,61 @@
         <map field="assetUrl"              attribute="Asset URL"              skip_null="true" skip_empty_string="true"/>
         <map field="assetType"             attribute="Asset Type"             skip_null="true" skip_empty_string="true"/>
 
+
+        <map field="organization"          attribute="Organization-test"           skip_null="true" skip_empty_string="true"/>
+        <map field="objectType"            attribute="Object Type-test"            skip_null="true" skip_empty_string="true"/>
+        <map field="theater"               attribute="Theater-test"                skip_null="true" skip_empty_string="true"/> 
+        <map field="unit"                  attribute="Unit-test"                   skip_null="true" skip_empty_string="true"/>
+        <map field="branch" attribute="Branch-TEST" skip_null="true" skip_empty_string="true"/>
+        <map field="objectType"           attribute="Record Type"                skip_null="true" skip_empty_string="true"/>
+
         <placeholder create="false" placeholderCategoryId="4584" nameField="fileName"/>
       </records>
     </destination>
   </sync>
-</metadatasync>
+
+  <!--
+    ================= VALUELOOKUPS (run on import, see autotask.xml) =================
+    Each runs once for a newly imported asset. ASSET_FILE_BASENAME is the file name WITHOUT
+    its extension, e.g. '2019.123.4_001'. The query strips a trailing '_<digits>' suffix
+    (the book/multi-image convention) to get the accession number, '2019.123.4'.
+    Written so %1 appears only once (sub-select), because it is unclear whether DSS
+    substitutes repeated placeholders. A valuelookup query must return ONE row, ONE column.
+    DRAFT - not yet run. Test on the sandbox first.
+  -->
+
+  <!-- Sets Accession Number from the file name. No staging row needed. -->
+  <sync type="valuelookup" log="debug" name="EMuAccessionFromFilename">
+    <source name="EmuStaging" type="database"
+            jdbc="jdbc:sqlserver://172.30.32.16\NETX;databaseName=EmuStaging;encrypt=false"
+            query="SELECT CASE WHEN p &gt; 1 THEN CASE WHEN SUBSTRING(n, LEN(n) - p + 2, p - 1) NOT LIKE '%[^0-9]%' THEN LEFT(n, LEN(n) - p) ELSE n END ELSE n END AS accession FROM (SELECT n, CHARINDEX('_', REVERSE(n)) AS p FROM (SELECT %1 AS n) a) b"
+            username="emusync" password="ZZZ">
+      <param type="ASSET_FILE_BASENAME" position="1"/>
+      <field name="Accession" column="accession"/>
+    </source>
+    <destination type="DAM">
+      <records name="Accession Number from filename" type="asset">
+        <map field="Accession" attribute="Accession Number"/>
+      </records>
+    </destination>
+  </sync>
+
+  <!-- Sets IRN by looking the accession number up in emu_staging. Replaces the manual CSV step.
+       If there is no staging row yet, or MORE THAN ONE record shares the accession
+       number (accession numbers are NOT unique across EMu), HAVING COUNT(*) = 1 returns no row and
+       nothing is set - the asset stays without an IRN rather than getting the wrong one. -->
+  <sync type="valuelookup" log="debug" name="EMuIrnFromFilename">
+    <source name="EmuStaging" type="database"
+            jdbc="jdbc:sqlserver://172.30.32.16\NETX;databaseName=EmuStaging;encrypt=false"
+            query="SELECT MAX(s.irn) AS irn FROM dbo.emu_staging s JOIN (SELECT CASE WHEN p &gt; 1 THEN CASE WHEN SUBSTRING(n, LEN(n) - p + 2, p - 1) NOT LIKE '%[^0-9]%' THEN LEFT(n, LEN(n) - p) ELSE n END ELSE n END AS accession FROM (SELECT n, CHARINDEX('_', REVERSE(n)) AS p FROM (SELECT %1 AS n) a) b) k ON s.accession_number = k.accession HAVING COUNT(*) = 1"
+            username="emusync" password="ZZZ">
+      <param type="ASSET_FILE_BASENAME" position="1"/>
+      <field name="IRN" column="irn"/>
+    </source>
+    <destination type="DAM">
+      <records name="IRN from filename" type="asset">
+        <map field="IRN" attribute="IRN"/>
+      </records>
+    </destination>
+  </sync>
+  </metadatasync>

@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 def run():
+    """Returns True if the run completed, False if it failed (the failure is
+    logged and recorded in sync_state; pipeline.py uses this to stop)."""
     # naive UTC - the sync_state datetime2 columns carry no tz
     run_at = datetime.now(timezone.utc).replace(tzinfo=None)
     last_sync_date = None
@@ -54,6 +56,7 @@ def run():
             conn, today, run_at, rows_processed,
             notes=f"ok: {rows_processed} record(s) modified since {last_sync_date}",
         )
+        return True
 
     except Exception as e:
         logger.exception("Polling run failed for %s", MODULE)
@@ -62,7 +65,7 @@ def run():
                 "Failed before a DB connection / watermark was established - "
                 "nothing recorded to sync_state"
             )
-            return
+            return False
         try:
             # keep the old watermark so the next run retries the same window
             state.update_sync_state(
@@ -71,6 +74,7 @@ def run():
             )
         except Exception:
             logger.exception("Additionally failed to record error status to sync_state")
+        return False
     finally:
         if conn is not None:
             conn.close()
