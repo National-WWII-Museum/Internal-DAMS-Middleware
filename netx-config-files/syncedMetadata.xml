@@ -82,8 +82,6 @@
         <map field="gettyGeoId"            attribute="Getty Geographic ID"    skip_null="true" skip_empty_string="true"/>
         <!-- <map field="geography"             attribute="Geography"              skip_null="true" skip_empty_string="true"/> -->
         <!-- <map field="topicalSubject"        attribute="Topical Subjects"       skip_null="true" skip_empty_string="true"/> -->
-        <!-- <map field="objectType"            attribute="Object Type"            skip_null="true" skip_empty_string="true"/> -->
-        <!-- <map field="organization"          attribute="Organization"           skip_null="true" skip_empty_string="true"/> -->
         <!-- <map field="localTerm"             attribute="Local Terms"            skip_null="true" skip_empty_string="true"/> -->
         <!-- <map field="battleEvent"           attribute="Battles and Events"     skip_null="true" skip_empty_string="true"/> -->
         <map field="person"                attribute="Person"                 skip_null="true" skip_empty_string="true"/>
@@ -92,8 +90,10 @@
         <map field="assetUrl"              attribute="Asset URL"              skip_null="true" skip_empty_string="true"/>
         <map field="assetType"             attribute="Asset Type"             skip_null="true" skip_empty_string="true"/>
         
-        <map field="branch" attribute="Branch-TEST" skip_null="true" skip_empty_string="true"/>
-        <map field="objectType"           attribute="Record Type"                skip_null="true" skip_empty_string="true"/>
+        <map field="organization"          attribute="Organization-test"           skip_null="true" skip_empty_string="true"/>
+        <map field="objectType"            attribute="Object Type-test"       skip_null="true" skip_empty_string="true"/>
+        <map field="branch"                attribute="Branch-TEST"                 skip_null="true" skip_empty_string="true"/>
+        <map field="objectType"            attribute="Record Type"                 skip_null="true" skip_empty_string="true"/>
         <map field="unit"                  attribute="Unit-test"                   skip_null="true" skip_empty_string="true"/>
         <map field="theater"               attribute="Theater-test"                skip_null="true" skip_empty_string="true"/> 
 
@@ -129,7 +129,7 @@
       <field name="objectType"            column="record_type"/>
       <field name="organization"          column="organizations"/>
       <field name="theater"               column="theaters"/>
-      <field name="branch" column="branches"/>
+      <field name="branch"                column="branches"/>
       <field name="localTerm"             column="local_terms"/>
       <field name="battleEvent"           column="battle_events"/>
       <field name="person"                column="person"/>
@@ -159,8 +159,6 @@
         <map field="gettyGeoId"            attribute="Getty Geographic ID"    skip_null="true" skip_empty_string="true"/>
         <map field="geography"             attribute="Geography"              skip_null="true" skip_empty_string="true"/>
         <map field="topicalSubject"        attribute="Topical Subjects"       skip_null="true" skip_empty_string="true"/>
-        <!-- <map field="objectType"            attribute="Object Type"            skip_null="true" skip_empty_string="true"/> -->
-        <map field="organization"          attribute="Organization"           skip_null="true" skip_empty_string="true"/>
         <map field="localTerm"             attribute="Local Terms"            skip_null="true" skip_empty_string="true"/>
         <map field="battleEvent"           attribute="Battles and Events"     skip_null="true" skip_empty_string="true"/>
         <map field="person"                attribute="Person"                 skip_null="true" skip_empty_string="true"/>
@@ -169,7 +167,9 @@
         <map field="assetUrl"              attribute="Asset URL"              skip_null="true" skip_empty_string="true"/>
         <map field="assetType"             attribute="Asset Type"             skip_null="true" skip_empty_string="true"/>
 
-        <!-- <map field="branch"                attribute="Branch"                 skip_null="true" skip_empty_string="true"/> -->
+
+        <map field="organization"          attribute="Organization-test"           skip_null="true" skip_empty_string="true"/>
+        <map field="objectType"            attribute="Object Type-test"            skip_null="true" skip_empty_string="true"/>
         <map field="theater"               attribute="Theater-test"                skip_null="true" skip_empty_string="true"/> 
         <map field="unit"                  attribute="Unit-test"                   skip_null="true" skip_empty_string="true"/>
         <map field="branch" attribute="Branch-TEST" skip_null="true" skip_empty_string="true"/>
