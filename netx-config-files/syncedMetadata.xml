@@ -23,7 +23,7 @@
   <sync type="scalar" log="debug" name="EMuByFilename" include_in_default="false">
     <source name="EmuStaging" type="database"
             jdbc="jdbc:sqlserver://172.30.32.16\NETX;databaseName=EmuStaging;encrypt=false"
-            query="SELECT irn, file_name, title, alternate_title, collection_title, accession_number, credit_line, collection_description, donor_name, hometown, video_length, latitude, longitude, getty_geo_id, units, geography, topical_subjects, record_type, organizations, theaters, branches, local_terms, battle_events, person, honorees, powkia, asset_url, asset_type FROM dbo.emu_staging WHERE status = 'ready' AND synced = 0 AND irn IS NOT NULL AND LTRIM(RTRIM(CAST(irn AS varchar(50)))) NOT IN ('', 'NULL')"
+            query="SELECT irn, file_name, title, alternate_title, collection_title, accession_number, credit_line, collection_description, donor_name, hometown, video_length, latitude, longitude, getty_geo_id, units, geography, topical_subjects, record_type, organizations, theaters, branches, local_terms, battle_events, person, honorees, powkia, asset_url, asset_type, tgm FROM dbo.emu_staging WHERE status = 'ready' AND synced = 0 AND irn IS NOT NULL AND LTRIM(RTRIM(CAST(irn AS varchar(50)))) NOT IN ('', 'NULL')"
             username="emusync" password="ZZZ">
 
       <field name="irn"                   column="irn"/>
@@ -54,6 +54,7 @@
       <field name="powkia"                column="powkia"/>
       <field name="assetUrl"              column="asset_url"/>
       <field name="assetType"             column="asset_type"/>
+      <field name="tgm"                   column="tgm"/>
 
       <callback type="success" sql="UPDATE dbo.emu_staging SET synced = 1, sync_failed = 0, synced_at = SYSDATETIME() WHERE irn = %1"
                 param1="irn" frequency="row"/>
@@ -89,6 +90,7 @@
         <map field="powkia"                attribute="POWKIA"                 skip_null="true" skip_empty_string="true"/>
         <map field="assetUrl"              attribute="Asset URL"              skip_null="true" skip_empty_string="true"/>
         <map field="assetType"             attribute="Asset Type"             skip_null="true" skip_empty_string="true"/>
+        <map field="tgm"                   attribute="Thesaurus for Graphic Materials" skip_null="true" skip_empty_string="true"/>
         
         <map field="organization"          attribute="Organization-test"           skip_null="true" skip_empty_string="true"/>
         <map field="objectType"            attribute="Object Type-test"       skip_null="true" skip_empty_string="true"/>
@@ -106,7 +108,7 @@
   <sync type="scalar" log="debug" name="EMuHolding" include_in_default="false">
     <source name="EmuStaging" type="database"
             jdbc="jdbc:sqlserver://172.30.32.16\NETX;databaseName=EmuStaging;encrypt=false"
-            query="SELECT irn, file_name, title, alternate_title, collection_title, accession_number, credit_line, collection_description, donor_name, hometown, video_length, latitude, longitude, getty_geo_id, units, geography, topical_subjects, record_type, organizations, theaters, branches, local_terms, battle_events, person, honorees, powkia, asset_url, asset_type FROM dbo.emu_staging WHERE status = 'holding' AND irn IS NOT NULL AND LTRIM(RTRIM(CAST(irn AS varchar(50)))) NOT IN ('', 'NULL')"
+            query="SELECT irn, file_name, title, alternate_title, collection_title, accession_number, credit_line, collection_description, donor_name, hometown, video_length, latitude, longitude, getty_geo_id, units, geography, topical_subjects, record_type, organizations, theaters, branches, local_terms, battle_events, person, honorees, powkia, asset_url, asset_type, tgm FROM dbo.emu_staging WHERE status = 'holding' AND irn IS NOT NULL AND LTRIM(RTRIM(CAST(irn AS varchar(50)))) NOT IN ('', 'NULL')"
             username="emusync" password="ZZZ">
 
       <field name="irn"                   column="irn"/>
@@ -137,6 +139,7 @@
       <field name="powkia"                column="powkia"/>
       <field name="assetUrl"              column="asset_url"/>
       <field name="assetType"             column="asset_type"/>
+      <field name="tgm"                   column="tgm"/>
 
       <!-- Intentionally no callbacks - see the note at the top of this file. -->
     </source>
@@ -166,6 +169,7 @@
         <map field="powkia"                attribute="POWKIA"                 skip_null="true" skip_empty_string="true"/>
         <map field="assetUrl"              attribute="Asset URL"              skip_null="true" skip_empty_string="true"/>
         <map field="assetType"             attribute="Asset Type"             skip_null="true" skip_empty_string="true"/>
+        <map field="tgm"                   attribute="Thesaurus for Graphic Materials" skip_null="true" skip_empty_string="true"/>
 
 
         <map field="organization"          attribute="Organization-test"           skip_null="true" skip_empty_string="true"/>
