@@ -7,28 +7,31 @@
         <exports/>
         <notifications/>
     </task>
-	<task id="EMu Test Sync" name="EMu Test Sync">
-		<matchCriteria type="and">
-			<criteria hour="15" interval="daily" minute="52" type="periodic"/>
-		</matchCriteria>
-		<customJob syncTaskNames="EMuByFilename,EMuHolding"
+    <task id="EMu Test Sync" name="EMu Test Sync">
+        <matchCriteria type="and">
+            <criteria hour="15" interval="daily" minute="52" type="periodic"/>
+        </matchCriteria>
+        <customJob syncTaskNames="EMuByFilename,EMuHolding"
              className="com.netxposure.products.imageportal.module.metadata.sync.job.MetadataSyncJob"/>
-	</task>
-	<!-- DRAFT, untested: run once per newly imported asset. One valuelookup per AutoTask.
-	     The ValueLookupJob className is assumed to sit next to MetadataSyncJob - verify it against
-	     the NetX Data Source Sync article. 'import' only (not 'resync') so re-syncs never overwrite. -->
-	<task id="EMu Accession From Filename" name="EMu Accession From Filename">
-		<matchCriteria type="or">
-			<criteria type="action" value="import"/>
-		</matchCriteria>
-		<customJob idSyncName="EMuAccessionFromFilename"
+    </task>
+    <!-- DRAFT, untested: run once per newly imported asset. One valuelookup per AutoTask.
+         The ValueLookupJob className is assumed to sit next to MetadataSyncJob - verify it against
+         the NetX Data Source Sync article. 'import' only (not 'resync') so re-syncs never overwrite. -->
+    <task id="EMu Accession From Filename" name="EMu Accession From Filename">
+        <matchCriteria type="or">
+            <criteria type="action" value="import"/>
+        </matchCriteria>
+        <customJob idSyncName="EMuAccessionFromFilename"
              className="com.netxposure.products.imageportal.module.metadata.sync.job.ValueLookupJob"/>
-	</task>
-	<task id="EMu IRN From Filename" name="EMu IRN From Filename">
-		<matchCriteria type="or">
-			<criteria type="action" value="import"/>
-		</matchCriteria>
-		<customJob idSyncName="EMuIrnFromFilename"
+    </task>
+    <!-- initMetadata runs AFTER the IRN lookup, using the IRN it just set: EMuInitialByIrn writes the
+         full staging row onto this one asset. EMuInitialByIrn must NOT appear in the daily task's
+         syncTaskNames above. -->
+    <task id="EMu IRN From Filename" name="EMu IRN From Filename">
+        <matchCriteria type="or">
+            <criteria type="action" value="import"/>
+        </matchCriteria>
+        <customJob idSyncName="EMuIrnFromFilename" initMetadata="EMuInitialByIrn"
              className="com.netxposure.products.imageportal.module.metadata.sync.job.ValueLookupJob"/>
-	</task>
+    </task>
 </autotask>
