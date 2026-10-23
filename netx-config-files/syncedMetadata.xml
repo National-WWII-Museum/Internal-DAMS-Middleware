@@ -12,18 +12,23 @@
                                          someone adds the IRN in NetX. NO synced filter and
                                          NO callbacks: DSS reports success even on a
                                          zero-match, so synced=1 would mean nothing here.
-                                         Rows leave 'holding' only via routing.py.
+                                         Rows normally leave 'holding' via routing.py, or via the
+                                         EMuInitialByIrn callback below when an upload gets its IRN.
 
-    The two <sync> blocks are identical apart from the query, the callbacks and the
-    task name. Keep their <field>/<map> lists in step when attributes change.
-    Task names must match syncTaskNames in autotask.xml exactly.
+    A third scalar task, EMuInitialByIrn, runs on import (see autotask.xml) right after the
+    valuelookups. It writes the full staging row onto the ONE newly imported asset (context
+    filter on ASSET_ID), so metadata is present at upload time instead of waiting for the daily run.
+
+    The three scalar <sync> blocks share the same <field>/<map> lists apart from the query,
+    the callbacks, the filter and the task name. Keep them in step when attributes change.
+    Task names must match syncTaskNames / idSyncName / initMetadata in autotask.xml exactly.
   -->
 
   <!-- ================= READY ================= -->
   <sync type="scalar" log="debug" name="EMuByFilename" include_in_default="false">
     <source name="EmuStaging" type="database"
             jdbc="jdbc:sqlserver://172.30.32.16\NETX;databaseName=EmuStaging;encrypt=false"
-            query="SELECT irn, file_name, title, alternate_title, collection_title, accession_number, credit_line, collection_description, donor_name, hometown, video_length, latitude, longitude, getty_geo_id, units, geography, topical_subjects, record_type, organizations, theaters, branches, local_terms, battle_events, person, honorees, powkia, asset_url, asset_type FROM dbo.emu_staging WHERE status = 'ready' AND synced = 0 AND irn IS NOT NULL AND LTRIM(RTRIM(CAST(irn AS varchar(50)))) NOT IN ('', 'NULL')"
+            query="SELECT irn, file_name, title, alternate_title, collection_title, accession_number, credit_line, collection_description, donor_name, hometown, video_length, latitude, longitude, getty_geo_id, units, geography, topical_subjects, record_type, organizations, theaters, branches, local_terms, battle_events, person, honorees, powkia, asset_url, asset_type, tgm FROM dbo.emu_staging WHERE status = 'ready' AND synced = 0 AND irn IS NOT NULL AND LTRIM(RTRIM(CAST(irn AS varchar(50)))) NOT IN ('', 'NULL')"
             username="emusync" password="ZZZ">
 
       <field name="irn"                   column="irn"/>
@@ -46,7 +51,7 @@
       <field name="objectType"            column="record_type"/>
       <field name="organization"          column="organizations"/>
       <field name="theater"               column="theaters"/>
-      <field name="branch" column="branches"/>
+      <field name="branch"                column="branches"/>
       <field name="localTerm"             column="local_terms"/>
       <field name="battleEvent"           column="battle_events"/>
       <field name="person"                column="person"/>
@@ -54,6 +59,7 @@
       <field name="powkia"                column="powkia"/>
       <field name="assetUrl"              column="asset_url"/>
       <field name="assetType"             column="asset_type"/>
+      <field name="tgm"                   column="tgm"/>
 
       <callback type="success" sql="UPDATE dbo.emu_staging SET synced = 1, sync_failed = 0, synced_at = SYSDATETIME() WHERE irn = %1"
                 param1="irn" frequency="row"/>
@@ -89,13 +95,14 @@
         <map field="powkia"                attribute="POWKIA"                 skip_null="true" skip_empty_string="true"/>
         <map field="assetUrl"              attribute="Asset URL"              skip_null="true" skip_empty_string="true"/>
         <map field="assetType"             attribute="Asset Type"             skip_null="true" skip_empty_string="true"/>
-        
-        <map field="organization"          attribute="Organization-test"           skip_null="true" skip_empty_string="true"/>
+        <map field="tgm"                   attribute="Thesaurus for Graphic Materials" skip_null="true" skip_empty_string="true"/>
+
+        <map field="organization"          attribute="Organization-test"      skip_null="true" skip_empty_string="true"/>
         <map field="objectType"            attribute="Object Type-test"       skip_null="true" skip_empty_string="true"/>
-        <map field="branch"                attribute="Branch-TEST"                 skip_null="true" skip_empty_string="true"/>
-        <map field="objectType"            attribute="Record Type"                 skip_null="true" skip_empty_string="true"/>
-        <map field="unit"                  attribute="Unit-test"                   skip_null="true" skip_empty_string="true"/>
-        <map field="theater"               attribute="Theater-test"                skip_null="true" skip_empty_string="true"/> 
+        <map field="branch"                attribute="Branch-TEST"            skip_null="true" skip_empty_string="true"/>
+        <map field="objectType"            attribute="Record Type"            skip_null="true" skip_empty_string="true"/>
+        <map field="unit"                  attribute="Unit-test"              skip_null="true" skip_empty_string="true"/>
+        <map field="theater"               attribute="Theater-test"           skip_null="true" skip_empty_string="true"/>
 
         <placeholder create="false" placeholderCategoryId="4584" nameField="fileName"/>
       </records>
@@ -106,7 +113,7 @@
   <sync type="scalar" log="debug" name="EMuHolding" include_in_default="false">
     <source name="EmuStaging" type="database"
             jdbc="jdbc:sqlserver://172.30.32.16\NETX;databaseName=EmuStaging;encrypt=false"
-            query="SELECT irn, file_name, title, alternate_title, collection_title, accession_number, credit_line, collection_description, donor_name, hometown, video_length, latitude, longitude, getty_geo_id, units, geography, topical_subjects, record_type, organizations, theaters, branches, local_terms, battle_events, person, honorees, powkia, asset_url, asset_type FROM dbo.emu_staging WHERE status = 'holding' AND irn IS NOT NULL AND LTRIM(RTRIM(CAST(irn AS varchar(50)))) NOT IN ('', 'NULL')"
+            query="SELECT irn, file_name, title, alternate_title, collection_title, accession_number, credit_line, collection_description, donor_name, hometown, video_length, latitude, longitude, getty_geo_id, units, geography, topical_subjects, record_type, organizations, theaters, branches, local_terms, battle_events, person, honorees, powkia, asset_url, asset_type, tgm FROM dbo.emu_staging WHERE status = 'holding' AND irn IS NOT NULL AND LTRIM(RTRIM(CAST(irn AS varchar(50)))) NOT IN ('', 'NULL')"
             username="emusync" password="ZZZ">
 
       <field name="irn"                   column="irn"/>
@@ -137,6 +144,7 @@
       <field name="powkia"                column="powkia"/>
       <field name="assetUrl"              column="asset_url"/>
       <field name="assetType"             column="asset_type"/>
+      <field name="tgm"                   column="tgm"/>
 
       <!-- Intentionally no callbacks - see the note at the top of this file. -->
     </source>
@@ -166,14 +174,14 @@
         <map field="powkia"                attribute="POWKIA"                 skip_null="true" skip_empty_string="true"/>
         <map field="assetUrl"              attribute="Asset URL"              skip_null="true" skip_empty_string="true"/>
         <map field="assetType"             attribute="Asset Type"             skip_null="true" skip_empty_string="true"/>
+        <map field="tgm"                   attribute="Thesaurus for Graphic Materials" skip_null="true" skip_empty_string="true"/>
 
-
-        <map field="organization"          attribute="Organization-test"           skip_null="true" skip_empty_string="true"/>
-        <map field="objectType"            attribute="Object Type-test"            skip_null="true" skip_empty_string="true"/>
-        <map field="theater"               attribute="Theater-test"                skip_null="true" skip_empty_string="true"/> 
-        <map field="unit"                  attribute="Unit-test"                   skip_null="true" skip_empty_string="true"/>
-        <map field="branch" attribute="Branch-TEST" skip_null="true" skip_empty_string="true"/>
-        <map field="objectType"           attribute="Record Type"                skip_null="true" skip_empty_string="true"/>
+        <map field="organization"          attribute="Organization-test"      skip_null="true" skip_empty_string="true"/>
+        <map field="objectType"            attribute="Object Type-test"       skip_null="true" skip_empty_string="true"/>
+        <map field="theater"               attribute="Theater-test"           skip_null="true" skip_empty_string="true"/>
+        <map field="unit"                  attribute="Unit-test"              skip_null="true" skip_empty_string="true"/>
+        <map field="branch"                attribute="Branch-TEST"            skip_null="true" skip_empty_string="true"/>
+        <map field="objectType"            attribute="Record Type"            skip_null="true" skip_empty_string="true"/>
 
         <placeholder create="false" placeholderCategoryId="4584" nameField="fileName"/>
       </records>
@@ -224,4 +232,107 @@
       </records>
     </destination>
   </sync>
-  </metadatasync>
+
+  <!--
+    ================= INITIAL SYNC ON UPLOAD =================
+    Runs AFTER the valuelookups above (list it in initMetadata in autotask.xml).
+    Reads the staging row for the IRN the new asset was just given (ASSET_ATTRIBUTE param) and
+    writes the full metadata onto that one asset only (context filter on ASSET_ID).
+    If the IRN lookup set nothing, the param is empty, the query returns no row, and this is a no-op.
+
+    assetMatcher="database": the IRN was only just written, so Solr may not have indexed it yet
+    (the DSS docs recommend this when one task depends on another task's attribute update).
+
+    Query has no status filter on purpose: an uploaded asset's row is usually 'holding' (no IRN
+    in NetX until now) but may be 'pending' or 'ready'.
+
+    Callback: flips a 'holding' row to 'ready' once the asset has its IRN and the write ran.
+    synced is NOT touched, so the daily EMuByFilename run still rewrites every asset with this IRN
+    (covers sibling images uploaded the same day) and then deletes the row as usual.
+    ASSUMPTIONS TO VERIFY: IRN attribute name; param datatype (integer vs string); that callbacks
+    fire for a task chained from the valuelookup job.
+  -->
+  <sync type="scalar" log="debug" name="EMuInitialByIrn" include_in_default="false">
+    <source name="EmuStaging" type="database"
+            jdbc="jdbc:sqlserver://172.30.32.16\NETX;databaseName=EmuStaging;encrypt=false"
+            query="SELECT irn, file_name, title, alternate_title, collection_title, accession_number, credit_line, collection_description, donor_name, hometown, video_length, latitude, longitude, getty_geo_id, units, geography, topical_subjects, record_type, organizations, theaters, branches, local_terms, battle_events, person, honorees, powkia, asset_url, asset_type, tgm FROM dbo.emu_staging WHERE irn = %1"
+            username="emusync" password="ZZZ">
+      <!-- Change datatype to "string" if the NetX IRN attribute / staging irn column is text. -->
+      <param type="ASSET_ATTRIBUTE" position="1" attribute="IRN" datatype="integer"/>
+
+      <field name="irn"                   column="irn"/>
+      <field name="fileName"              column="file_name"/>
+      <field name="title"                 column="title"/>
+      <field name="alternateTitle"        column="alternate_title"/>
+      <field name="collectionTitle"       column="collection_title"/>
+      <field name="accessionNumber"       column="accession_number"/>
+      <field name="creditLine"            column="credit_line"/>
+      <field name="collectionDescription" column="collection_description"/>
+      <field name="donorName"             column="donor_name"/>
+      <field name="hometown"              column="hometown"/>
+      <field name="videoLength"           column="video_length"/>
+      <field name="latitude"              column="latitude"/>
+      <field name="longitude"             column="longitude"/>
+      <field name="gettyGeoId"            column="getty_geo_id"/>
+      <field name="unit"                  column="units"/>
+      <field name="geography"             column="geography"/>
+      <field name="topicalSubject"        column="topical_subjects"/>
+      <field name="objectType"            column="record_type"/>
+      <field name="organization"          column="organizations"/>
+      <field name="theater"               column="theaters"/>
+      <field name="branch"                column="branches"/>
+      <field name="localTerm"             column="local_terms"/>
+      <field name="battleEvent"           column="battle_events"/>
+      <field name="person"                column="person"/>
+      <field name="honorees"              column="honorees"/>
+      <field name="powkia"                column="powkia"/>
+      <field name="assetUrl"              column="asset_url"/>
+      <field name="assetType"             column="asset_type"/>
+      <field name="tgm"                   column="tgm"/>
+
+      <callback type="success" sql="UPDATE dbo.emu_staging SET status = 'ready' WHERE irn = %1 AND synced = 0"
+                param1="irn" frequency="row"/>
+    </source>
+
+    <destination type="DAM">
+      <records name="Initial sync on upload" type="asset" assetMatcher="database">
+        <filter type="context">
+          <context type="ASSET_ID"/>
+        </filter>
+        <link field="irn" attribute="IRN"/>
+
+        <!-- Same map list as EMuByFilename (commented-out maps stay commented until verified). -->
+        <map field="title"                 attribute="Title"                  skip_null="true" skip_empty_string="true"/>
+        <map field="alternateTitle"        attribute="Alternate Title"        skip_null="true" skip_empty_string="true"/>
+        <map field="collectionTitle"       attribute="Collection Title"       skip_null="true" skip_empty_string="true"/>
+        <map field="accessionNumber"       attribute="Accession Number"       skip_null="true" skip_empty_string="true"/>
+        <map field="creditLine"            attribute="Credit Line"            skip_null="true" skip_empty_string="true"/>
+        <map field="collectionDescription" attribute="Collection Description" skip_null="true" skip_empty_string="true"/>
+        <map field="donorName"             attribute="Donor Name"             skip_null="true" skip_empty_string="true"/>
+        <map field="hometown"              attribute="Hometown"               skip_null="true" skip_empty_string="true"/>
+        <!-- <map field="videoLength"           attribute="Video Length"           skip_null="true" skip_empty_string="true"/> -->
+        <map field="latitude"              attribute="Latitude"               skip_null="true" skip_empty_string="true"/>
+        <map field="longitude"             attribute="Longitude"              skip_null="true" skip_empty_string="true"/>
+        <map field="gettyGeoId"            attribute="Getty Geographic ID"    skip_null="true" skip_empty_string="true"/>
+        <!-- <map field="geography"             attribute="Geography"              skip_null="true" skip_empty_string="true"/> -->
+        <!-- <map field="topicalSubject"        attribute="Topical Subjects"       skip_null="true" skip_empty_string="true"/> -->
+        <!-- <map field="localTerm"             attribute="Local Terms"            skip_null="true" skip_empty_string="true"/> -->
+        <!-- <map field="battleEvent"           attribute="Battles and Events"     skip_null="true" skip_empty_string="true"/> -->
+        <map field="person"                attribute="Person"                 skip_null="true" skip_empty_string="true"/>
+        <map field="honorees"              attribute="Honorees"               skip_null="true" skip_empty_string="true"/>
+        <map field="powkia"                attribute="POWKIA"                 skip_null="true" skip_empty_string="true"/>
+        <map field="assetUrl"              attribute="Asset URL"              skip_null="true" skip_empty_string="true"/>
+        <map field="assetType"             attribute="Asset Type"             skip_null="true" skip_empty_string="true"/>
+        <map field="tgm"                   attribute="Thesaurus for Graphic Materials" skip_null="true" skip_empty_string="true"/>
+
+        <map field="organization"          attribute="Organization-test"      skip_null="true" skip_empty_string="true"/>
+        <map field="objectType"            attribute="Object Type-test"       skip_null="true" skip_empty_string="true"/>
+        <map field="branch"                attribute="Branch-TEST"            skip_null="true" skip_empty_string="true"/>
+        <map field="objectType"            attribute="Record Type"            skip_null="true" skip_empty_string="true"/>
+        <map field="unit"                  attribute="Unit-test"              skip_null="true" skip_empty_string="true"/>
+        <map field="theater"               attribute="Theater-test"           skip_null="true" skip_empty_string="true"/>
+      </records>
+    </destination>
+  </sync>
+
+</metadatasync>

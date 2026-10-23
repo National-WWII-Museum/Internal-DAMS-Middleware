@@ -47,6 +47,7 @@ PLACEHOLDER_FIELDS = [
     "data.IntInterviewDate0",
     "data.ExtInterviewSummary",
     "data.SummaryData",
+    "data.WebTGM_tab",
 ]
 
 # Reference fields to follow into another module, and which fields to pull

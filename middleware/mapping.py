@@ -57,6 +57,7 @@ WRITE_COLUMNS = [
     "interview_date",
     "geo_hierarchy",
     "file_name",
+    "tgm",
     "raw_json",
 ]
 
@@ -231,6 +232,8 @@ def record_to_staging_row(record):
         "interview_date": _truncate(_scalar(record.get("IntInterviewDate0")), 50),
         "geo_hierarchy": geo_hierarchy,
         "file_name": _truncate(_extract_file_name(record), 500),
+        # Thesaurus for Graphic Materials terms, e.g. 'Ordnance--American--United States'
+        "tgm": _pack_csv(record.get("WebTGM_tab")),
         "raw_json": json.dumps(record, default=str, ensure_ascii=False),
     }
 
