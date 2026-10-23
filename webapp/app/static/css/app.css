@@ -1,0 +1,16 @@
+/* Long titles get one line with an ellipsis; the full text is in the title attribute. */
+.cell-title {
+  max-width: 26rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell-nowrap {
+  white-space: nowrap;
+}
+
+/* Dashboard cards are links: give them a hover state. */
+a.box:hover {
+  box-shadow: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.2), 0 0 0 1px rgba(10, 10, 10, 0.05);
+}
