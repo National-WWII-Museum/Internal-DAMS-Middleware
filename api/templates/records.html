@@ -89,7 +89,7 @@
         <td class="cell-nowrap">{{ r.updated_at|dt }}</td>
         <td>
           {% if r.sync_failed %}<span class="tag is-danger">failed</span>
-          {% elif r.synced %}<span class="tag is-success is-light">synced</span>{% endif %}
+          {% elif r.synced %}<span class="tag is-success">synced</span>{% endif %}
         </td>
       </tr>
       {% else %}

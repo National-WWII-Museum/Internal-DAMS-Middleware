@@ -6,14 +6,13 @@ from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import Response
-from fastapi.templating import Jinja2Templates
-from pathlib import Path
 
 from common import staging
 from common.db import get_db
 
+from ..templating import templates
+
 router = APIRouter()
-templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
 
 PAGE_SIZE = 50
 SORT_LABELS = {
@@ -21,13 +20,6 @@ SORT_LABELS = {
     "newest": "Newest first seen",
     "oldest": "Oldest first seen",
 }
-
-
-def _format_dt(value):
-    return value.strftime("%Y-%m-%d %H:%M") if value else ""
-
-
-templates.env.filters["dt"] = _format_dt
 
 
 def _records_url(status, q, failed, sort, page):

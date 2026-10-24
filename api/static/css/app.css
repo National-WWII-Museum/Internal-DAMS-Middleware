@@ -1,4 +1,47 @@
 
+:root {
+  --bulma-scheme-h: 213;
+  --bulma-scheme-s: 19%;
+  --bulma-text-h: 330;
+  --bulma-text-s: 4%;
+  --bulma-text-l: 10%;
+  --bulma-text-strong-l: 10%;
+  --bulma-dark-h: 213deg;
+  --bulma-dark-s: 19%;
+  --bulma-dark-l: 12%;
+  --bulma-link-h: 197deg;
+  --bulma-link-s: 100%;
+  --bulma-link-l: 17%;
+  --bulma-link-on-scheme-l: 22%;
+  --bulma-primary-h: 197deg;
+  --bulma-primary-s: 100%;
+  --bulma-primary-l: 17%;
+  --bulma-primary-invert-l: 100%;
+  --bulma-primary-on-scheme-l: 22%;
+  --bulma-danger-h: 0deg;
+  --bulma-danger-s: 83%;
+  --bulma-danger-l: 42%;
+  --bulma-danger-invert-l: 100%;
+  --bulma-radius-small: 0;
+  --bulma-radius: 0;
+  --bulma-radius-medium: 0;
+  --bulma-radius-large: 0;
+  --bulma-radius-rounded: 0;
+}
+
+
+*, *::before, *::after {
+  border-radius: 0 !important;
+}
+
+.navbar {
+  border-bottom: 3px solid #c21212;
+}
+
+a.navbar-item:hover {
+  color: #c21212;
+}
+
 .cell-title {
   max-width: 26rem;
   overflow: hidden;
@@ -6,10 +49,34 @@
   white-space: nowrap;
 }
 
+.logo {
+  width: 90px;
+  padding: 10px;
+}
+
 .cell-nowrap {
   white-space: nowrap;
 }
 
+
+.log-entry {
+  margin-bottom: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-left: 4px solid #dbdbdb;
+}
+
+.log-error {
+  border-left-color: #c21212;
+  background: #fcecec;
+}
+
+.log-warning {
+  border-left-color: #ffe08a;
+  background: #fffaeb;
+}
 
 a.box:hover {
   box-shadow: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.2), 0 0 0 1px rgba(10, 10, 10, 0.05);

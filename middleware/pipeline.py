@@ -23,6 +23,7 @@ Log: data/pipeline.log. Run from the project folder ("Start in").
 """
 import argparse
 import logging
+from logging.handlers import RotatingFileHandler
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -73,7 +74,7 @@ def _setup_logging():
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        handlers=[logging.StreamHandler(), logging.FileHandler(log_path)],
+        handlers=[logging.StreamHandler(), RotatingFileHandler(log_path, maxBytes=5_000_000, backupCount=5, encoding="utf-8")],
     )
 
 
