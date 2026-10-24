@@ -19,6 +19,16 @@ C:\ww2-emu-netx\
 |   |-- emu_client.py        <- token fetch, search/filter, pagination logic
 |   |-- ...
 |
+|-- api\                     <- FastAPI app (staging web UI now; NetX/EMu webhook endpoints later)
+|   |-- main.py              <- creates the app, includes the routers
+|   |-- routers\             <- one file per concern (ui.py = the records page)
+|   |-- templates\, static\  <- Jinja2 + Bulma for the web UI
+|
+|-- common\                  <- code shared by middleware AND api
+|   |-- config.py            <- DB connection settings from .env
+|   |-- db.py                <- pyodbc connection + per-request dependency
+|   |-- staging.py           <- emu_staging queries used by the web UI
+|
 |-- scripts\                 <- one-off / diagnostic scripts
 |   |-- get_schema.py
 |   |-- get_sample_records.py
@@ -30,6 +40,8 @@ C:\ww2-emu-netx\
 ## Why split it this way
 
 - `middleware/` is the actual product — the code that eventually runs continuously in production (the polling loop, the webhook listener).
+- `api/` is the FastAPI service: the read-only staging viewer today, and later the endpoints NetX webhooks call and the ones that return data to EMu. Add a new concern as a new file in `api/routers/` plus one `include_router` line in `api/main.py`. Keep route handlers thin; put real logic in functions they call.
+- `common/` holds what both `middleware/` and `api/` need, so the two never drift apart. `middleware/config.py` still has its own copy of the DB settings; moving it onto `common/` is a possible later cleanup.
 - `scripts/` all things you run manually, once in a while, to explore or diagnose something. 
 - `data/` is output, not input — schema JSON, CSVs, logs. (Sync state lives on a SQL Server DB on a different on site VM.)
 
@@ -56,11 +68,21 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 
 # Install dependencies (use -m pip, not bare pip, on this VM)
-python -m pip install requests python-dotenv
+python -m pip install -e .
 
 # Copy the example env file and fill in real values
-copy .env.example .env
+copy .envExample .env
 ```
+
+## Running the API (staging web UI)
+
+Run from the repo root (so `api` and `common` both import cleanly). The API and the middleware share the same `.env`.
+
+```powershell
+uvicorn api.main:app --reload
+```
+
+On the VM it runs as a Windows service via NSSM: point the app at `api.main:app` with the repo root as the working directory.
 
 ## `.env` Configuration
 
@@ -127,3 +149,9 @@ Content-Type: application/json
 
 - Axiell EMu REST API documentation (see project docs — treated as source of truth for this integration; distinguish EMu 9-specific behavior from generic guidance where docs allow)
 - `xmu` community tooling (XML batch workflows, not REST): https://xmu.readthedocs.io
+
+
+## FOlder structure update
+- Make a new venv at the repo root, since the old one had webapp/ paths baked in: python -m venv .venv, activate it, then pip install -e .
+
+- Run it from the repo root: uvicorn api.main:app --reload. It used to be app.main:app, so update the NSSM service path and working directory to match when you deploy.

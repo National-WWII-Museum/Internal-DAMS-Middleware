@@ -59,15 +59,20 @@
 
 <p class="mb-3 has-text-grey">
   {% if total %}Showing {{ start }}–{{ end }} of {{ total }}{% else %}0 results{% endif %}
-  · times are UTC
 </p>
 
 <div class="table-container">
   <table class="table is-fullwidth is-striped is-hoverable">
     <thead>
       <tr>
-        <th>IRN</th><th>Status</th><th>Title</th><th>Accession no.</th>
-        <th>File name</th><th>First seen</th><th>Updated</th><th>Sync</th>
+        <th>IRN</th>
+        <th>Status</th>
+        <th>Accession no.</th>
+        <th>Title</th>
+        <th>File name</th>
+        <th>First seen</th>
+        <th>Updated</th>
+        <th>Sync</th>
       </tr>
     </thead>
     <tbody>
@@ -75,8 +80,8 @@
       <tr>
         <td class="cell-nowrap">{{ r.irn }}</td>
         <td>{{ status_tag(r.status) }}</td>
-        <td class="cell-title" title="{{ r.title or '' }}">{{ r.title or '' }}</td>
         <td class="cell-nowrap">{{ r.accession_number or '' }}</td>
+        <td class="cell-title" title="{{ r.title or '' }}">{{ r.title or '' }}</td>
         <td class="cell-nowrap">
           {% if r.file_name %}{{ r.file_name }}{% else %}<span class="has-text-grey-light">none</span>{% endif %}
         </td>

@@ -10,7 +10,13 @@ dependencies = [
     "requests",
     "python-dotenv",
     "pyodbc",
+    "fastapi",
+    "uvicorn[standard]",
+    "jinja2",
 ]
 
-[tool.setuptools]
-packages = ["middleware"]
+[tool.setuptools.packages.find]
+include = ["middleware*", "api*", "common*"]
+
+[tool.setuptools.package-data]
+api = ["templates/*", "static/css/*"]

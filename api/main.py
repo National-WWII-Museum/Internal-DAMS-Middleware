@@ -7,15 +7,16 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import queries
-from .db import get_connection, get_db
-from .views import router as views_router
+from common import staging
+from common.db import get_connection, get_db
+
+from .routers import ui
 
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Records in Que")
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
-app.include_router(views_router)
+app.include_router(ui.router)
 
 @app.exception_handler(pyodbc.Error)
 async def database_error_handler(request, exc):
@@ -46,7 +47,7 @@ def health_db():
 
 @app.get("/api/status-counts")
 def status_counts(conn=Depends(get_db)):
-    return queries.get_status_counts(conn)
+    return staging.get_status_counts(conn)
 
 @app.get("/api/records")
 def records(
@@ -58,7 +59,7 @@ def records(
     page_size: int = Query(50, ge=1, le=200),
     conn=Depends(get_db),
 ):
-    return queries.get_records(
+    return staging.get_records(
         conn,
         status=status,
         q=(q or "").strip() or None,
