@@ -9,11 +9,11 @@ from fastapi.responses import Response
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
-from . import queries
-from .db import get_db
+from common import staging
+from common.db import get_db
 
 router = APIRouter()
-templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
 
 PAGE_SIZE = 50
 SORT_LABELS = {
@@ -56,11 +56,11 @@ def records_page(
     conn=Depends(get_db),
 ):
     # The form can send blanks or odd values; normalise instead of erroring.
-    status = status if status in queries.STATUSES else None
-    sort = sort if sort in queries.SORTS else "updated"
+    status = status if status in staging.STATUSES else None
+    sort = sort if sort in staging.SORTS else "updated"
     q = (q or "").strip()[:100] or None
 
-    result = queries.get_records(
+    result = staging.get_records(
         conn, status=status, q=q, failed=failed, sort=sort,
         page=page, page_size=PAGE_SIZE,
     )
@@ -72,7 +72,7 @@ def records_page(
         request, "records.html",
         {
             "f": {"status": status, "q": q, "failed": failed, "sort": sort},
-            "statuses": queries.STATUSES,
+            "statuses": staging.STATUSES,
             "sorts": SORT_LABELS,
             "items": items,
             "total": total,
@@ -97,7 +97,7 @@ def _csv_cell(value):
 
 @router.get("/holding.csv")
 def holding_csv(conn=Depends(get_db)):
-    columns, rows = queries.get_holding_export(conn)
+    columns, rows = staging.get_holding_export(conn)
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     writer.writerow(columns)
