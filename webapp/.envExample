@@ -1,0 +1,9 @@
+DB_HOST=localhost
+DB_PORT=1433
+DB_NAME=EmuStaging
+DB_USER=sa
+DB_PASSWORD=your_sql_password
+# Optional - defaults shown
+DB_DRIVER=ODBC Driver 18 for SQL Server
+DB_ENCRYPT=yes
+DB_TRUST_SERVER_CERT=yes

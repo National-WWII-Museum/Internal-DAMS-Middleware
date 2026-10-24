@@ -1,0 +1,4 @@
+{% macro status_tag(status) -%}
+{% set colors = {'pending': 'is-info', 'ready': 'is-success', 'holding': 'is-warning', 'missing_file': 'is-dark'} %}
+<span class="tag {{ colors.get(status, 'is-light') }}">{{ status }}</span>
+{%- endmacro %}

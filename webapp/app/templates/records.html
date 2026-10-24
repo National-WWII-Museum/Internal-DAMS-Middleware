@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_tag %}
+{% block title %}Records · Records in Que{% endblock %}
+{% block content %}
+<h1 class="title">Records</h1>
+
+<form method="get" action="/" class="box">
+  <div class="columns is-vcentered">
+    <div class="column is-4">
+      <div class="field">
+        <label class="label" for="q">Search</label>
+        <div class="control">
+          <input class="input" id="q" type="search" name="q" value="{{ f.q or '' }}"
+                 placeholder="IRN, accession no., file name, title" maxlength="100">
+        </div>
+      </div>
+    </div>
+    <div class="column is-2">
+      <div class="field">
+        <label class="label" for="status">Status</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select id="status" name="status">
+              <option value="">All</option>
+              {% for s in statuses %}
+              <option value="{{ s }}" {% if f.status == s %}selected{% endif %}>{{ s }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="column is-3">
+      <div class="field">
+        <label class="label" for="sort">Sort</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select id="sort" name="sort">
+              {% for key, label in sorts.items() %}
+              <option value="{{ key }}" {% if f.sort == key %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="column is-3">
+      <label class="checkbox">
+        <input type="checkbox" name="failed" value="true" {% if f.failed %}checked{% endif %}>
+        Failed only
+      </label>
+      <div class="buttons mt-2">
+        <button class="button is-link" type="submit">Apply</button>
+        <a class="button is-light" href="/">Reset</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+<p class="mb-3 has-text-grey">
+  {% if total %}Showing {{ start }}–{{ end }} of {{ total }}{% else %}0 results{% endif %}
+  · times are UTC
+</p>
+
+<div class="table-container">
+  <table class="table is-fullwidth is-striped is-hoverable">
+    <thead>
+      <tr>
+        <th>IRN</th><th>Status</th><th>Title</th><th>Accession no.</th>
+        <th>File name</th><th>First seen</th><th>Updated</th><th>Sync</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in items %}
+      <tr>
+        <td class="cell-nowrap">{{ r.irn }}</td>
+        <td>{{ status_tag(r.status) }}</td>
+        <td class="cell-title" title="{{ r.title or '' }}">{{ r.title or '' }}</td>
+        <td class="cell-nowrap">{{ r.accession_number or '' }}</td>
+        <td class="cell-nowrap">
+          {% if r.file_name %}{{ r.file_name }}{% else %}<span class="has-text-grey-light">none</span>{% endif %}
+        </td>
+        <td class="cell-nowrap">{{ r.first_seen_at|dt }}</td>
+        <td class="cell-nowrap">{{ r.updated_at|dt }}</td>
+        <td>
+          {% if r.sync_failed %}<span class="tag is-danger">failed</span>
+          {% elif r.synced %}<span class="tag is-success is-light">synced</span>{% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" class="has-text-centered has-text-grey py-5">No records match these filters.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<nav class="pagination is-centered" role="navigation" aria-label="pagination">
+  {% if prev_url %}<a class="pagination-previous" href="{{ prev_url }}">Previous</a>
+  {% else %}<a class="pagination-previous is-disabled" aria-disabled="true">Previous</a>{% endif %}
+  {% if next_url %}<a class="pagination-next" href="{{ next_url }}">Next</a>
+  {% else %}<a class="pagination-next is-disabled" aria-disabled="true">Next</a>{% endif %}
+  <ul class="pagination-list">
+    <li><span class="pagination-link is-current">Page {{ page }} of {{ total_pages }}</span></li>
+  </ul>
+</nav>
+{% endblock %}
