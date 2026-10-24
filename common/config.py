@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -24,3 +26,7 @@ DB_CONNECTION_STRING = (
     f"Encrypt={DB_ENCRYPT};"
     f"TrustServerCertificate={DB_TRUST_SERVER_CERT};"
 )
+
+# Folder holding the middleware's *.log files (read by the API's Logs page).
+# Defaults to <repo root>/data, where the middleware writes them.
+LOG_DIR = Path(os.getenv("LOG_DIR") or Path(__file__).resolve().parent.parent / "data")

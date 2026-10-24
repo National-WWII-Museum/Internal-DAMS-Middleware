@@ -74,15 +74,109 @@ python -m pip install -e .
 copy .envExample .env
 ```
 
-## Running the API (staging web UI)
+## Command reference
 
-Run from the repo root (so `api` and `common` both import cleanly). The API and the middleware share the same `.env`.
+Run everything from the repo root (`C:\Internal-DAMS-Middleware`) with the venv active. Use `python -m ...` rather than bare `pip` / `uvicorn`: on the VM the `.exe` launchers in `.venv\Scripts` can be blocked ("Access is denied"), but `python -m` works. The API and the middleware share the same `.env`. Every job writes a log to `data\<name>.log`.
+
+### Setup (once, or after pulling new dependencies)
 
 ```powershell
-uvicorn api.main:app --reload
+.venv\Scripts\Activate.ps1
+python -m pip install -e .
 ```
 
-On the VM it runs as a Windows service via NSSM: point the app at `api.main:app` with the repo root as the working directory.
+### Staging web app (API)
+
+```powershell
+# start (listens on the network so the team can reach it at http://<vm-ip>:8000/)
+python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
+
+# while developing: restart automatically when files change (don't use as the service)
+python -m uvicorn api.main:app --reload
+```
+
+Checks: `/health` (app is up), `/health/db` (database reachable), `/` (records table), `/holding.csv` (CSV download), `/logs` (middleware logs, with a warnings/errors filter).
+
+If other machines can't connect, open the port once (admin PowerShell):
+
+```powershell
+New-NetFirewallRule -DisplayName "Staging API" -Direction Inbound -Protocol TCP -LocalPort 8000 -Action Allow
+```
+
+On the VM it runs as a Windows service via NSSM:
+
+| NSSM field | Value |
+|---|---|
+| Path | `C:\Internal-DAMS-Middleware\.venv\Scripts\python.exe` |
+| Startup directory | `C:\Internal-DAMS-Middleware` |
+| Arguments | `-m uvicorn api.main:app --host 0.0.0.0 --port 8000` |
+
+```powershell
+nssm start <service-name>
+nssm stop <service-name>
+nssm restart <service-name>     # after deploying new code
+nssm status <service-name>
+```
+
+### Full pipeline (what the scheduled task runs)
+
+Polling -> sweep -> routing, in that order. Stops at the first step that fails (exit code 1). Log: `data\pipeline.log`.
+
+```powershell
+python -m middleware.pipeline                       # all three steps
+python -m middleware.pipeline --skip-polling        # sweep + routing only
+python -m middleware.pipeline --days 30             # sweep look-back (default 14)
+
+# poll a fixed EMu modified-date window (both dates inclusive; --to-date optional).
+# The watermark is NOT moved - safe for testing and backfills.
+python -m middleware.pipeline --from-date 2026-06-03 --to-date 2026-06-05
+```
+
+### Individual steps
+
+```powershell
+# Polling: EMu records modified since the last run -> emu_staging. Advances the watermark.
+python -m middleware.polling
+
+# Polling one day (omit the date for the day after the last synced day). Advances the watermark.
+python -m middleware.polling_single_day 2026-06-03
+python -m middleware.polling_single_day
+
+# Polling a date range, both ends inclusive. Run directly like this it DOES move the
+# watermark to the end date; use pipeline --from-date if you don't want that.
+python -m middleware.polling_date_range 2026-06-01 2026-06-05
+
+# Sweep: tag recent NetX assets that have no IRN, via their accession number.
+python -m middleware.sweep                          # dry run - logs what it WOULD do
+python -m middleware.sweep --apply                  # actually write to NetX
+python -m middleware.sweep --days 30 --apply        # look back further (default 14)
+
+# Routing: mark pending/holding rows 'ready' (IRN exists in NetX) or 'holding'.
+python -m middleware.routing
+```
+
+Run order when doing it by hand: polling, then sweep, then routing. The NetX DSS task then writes metadata for the `ready` rows.
+
+### Re-queueing rows
+
+Sets `status = 'pending'` and clears `synced` / `sync_failed`; the next routing run looks at them again. Pass at least one option; they can be combined.
+
+```powershell
+python -m middleware.requeue --failed               # ready rows whose DSS write failed
+python -m middleware.requeue --holding              # force a re-check of every holding row
+python -m middleware.requeue --missing-file         # every missing_file row
+python -m middleware.requeue --irn 229430 118822    # specific IRNs, any status
+python -m middleware.routing                        # then re-route
+```
+
+### Logs
+
+`data\pipeline.log`, `data\polling.log`, `data\sweep.log`, `data\routing.log`, `data\requeue.log`. Each rotates at about 5 MB and keeps 5 older copies (`pipeline.log.1`, `.2`, ...). The web app's **Logs** page (`/logs`) shows them newest-first with a warnings/errors filter; it reads the folder in `LOG_DIR` (default `data\`).
+
+```powershell
+Get-Content data\pipeline.log -Tail 50              # last 50 lines
+Get-Content data\pipeline.log -Wait -Tail 20        # follow live
+```
 
 ## `.env` Configuration
 
@@ -103,6 +197,7 @@ DB_PASSWORD=         #
 DB_DRIVER=           # optional, default "ODBC Driver 18 for SQL Server" — must be installed on the VM
 DB_ENCRYPT=          # optional, default "yes"
 DB_TRUST_SERVER_CERT= # optional, default "yes" (internal server, self-signed cert)
+LOG_DIR=             # optional, folder the API's Logs page reads; default is the repo's data\ folder
 ```
 
 ---

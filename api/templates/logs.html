@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Logs · Records in Que{% endblock %}
+{% block content %}
+<h1 class="title">Logs</h1>
+
+<form method="get" action="/logs" class="box">
+  <div class="columns is-vcentered">
+    <div class="column is-3">
+      <div class="field">
+        <label class="label" for="log">Log</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select id="log" name="log">
+              {% for n in log_names %}
+              <option value="{{ n }}" {% if f.log == n %}selected{% endif %}>{{ n }}.log</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="column is-3">
+      <div class="field">
+        <label class="label" for="level">Show</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select id="level" name="level">
+              {% for key, label in level_labels.items() %}
+              <option value="{{ key }}" {% if f.level == key %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="column is-2">
+      <div class="field">
+        <label class="label" for="lines">Entries</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select id="lines" name="lines">
+              {% for n in line_choices %}
+              <option value="{{ n }}" {% if f.lines == n %}selected{% endif %}>Latest {{ n }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="column is-2">
+      <div class="field">
+        <label class="label" for="version">File</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select id="version" name="version">
+              {% for v in versions %}
+              <option value="{{ v }}" {% if f.version == v %}selected{% endif %}>{% if v == 0 %}Current{% else %}Older (.{{ v }}){% endif %}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="column is-2">
+      <div class="buttons">
+        <button class="button is-link" type="submit">Apply</button>
+        <a class="button is-light" href="/logs">Reset</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if not r.exists %}
+<div class="notification is-light">
+  <strong>{{ file_name }}</strong> doesn't exist yet. It's created the first time that job runs.
+</div>
+{% else %}
+<p class="mb-3 has-text-grey">
+  <strong>{{ file_name }}</strong> · {{ size_label }} · last written {{ r.modified|dt }}
+  ·
+  {% if r.errors %}<span class="has-text-danger has-text-weight-semibold">{{ r.errors }} error{{ '' if r.errors == 1 else 's' }}</span>{% else %}0 errors{% endif %},
+  {{ r.warnings }} warning{{ '' if r.warnings == 1 else 's' }} in this file
+</p>
+<p class="mb-3 has-text-grey">
+  {% if r.matching %}Showing the latest {{ r.records|length }} of {{ r.matching }} matching entries, newest first.{% else %}No entries match this filter.{% endif %}
+  {% if r.truncated %}Only the last part of a very large file was read.{% endif %}
+</p>
+
+{% for e in r.records %}
+<pre class="log-entry log-{{ e.css }}">{{ e.text }}</pre>
+{% endfor %}
+{% endif %}
+{% endblock %}

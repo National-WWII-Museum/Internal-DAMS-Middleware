@@ -10,13 +10,14 @@ from fastapi.staticfiles import StaticFiles
 from common import staging
 from common.db import get_connection, get_db
 
-from .routers import ui
+from .routers import logs, ui
 
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Records in Que")
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 app.include_router(ui.router)
+app.include_router(logs.router)
 
 @app.exception_handler(pyodbc.Error)
 async def database_error_handler(request, exc):

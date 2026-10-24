@@ -11,6 +11,25 @@
 }
 
 
+.log-entry {
+  margin-bottom: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-left: 4px solid #dbdbdb;
+}
+
+.log-error {
+  border-left-color: #f14668;
+  background: #feecf0;
+}
+
+.log-warning {
+  border-left-color: #ffe08a;
+  background: #fffaeb;
+}
+
 a.box:hover {
   box-shadow: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.2), 0 0 0 1px rgba(10, 10, 10, 0.05);
 }
