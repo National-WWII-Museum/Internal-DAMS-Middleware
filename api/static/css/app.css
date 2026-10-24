@@ -1,9 +1,57 @@
 
+:root {
+  --bulma-scheme-h: 213;
+  --bulma-scheme-s: 19%;
+  --bulma-text-h: 330;
+  --bulma-text-s: 4%;
+  --bulma-text-l: 10%;
+  --bulma-text-strong-l: 10%;
+  --bulma-dark-h: 213deg;
+  --bulma-dark-s: 19%;
+  --bulma-dark-l: 12%;
+  --bulma-link-h: 197deg;
+  --bulma-link-s: 100%;
+  --bulma-link-l: 17%;
+  --bulma-link-on-scheme-l: 22%;
+  --bulma-primary-h: 197deg;
+  --bulma-primary-s: 100%;
+  --bulma-primary-l: 17%;
+  --bulma-primary-invert-l: 100%;
+  --bulma-primary-on-scheme-l: 22%;
+  --bulma-danger-h: 0deg;
+  --bulma-danger-s: 83%;
+  --bulma-danger-l: 42%;
+  --bulma-danger-invert-l: 100%;
+  --bulma-radius-small: 0;
+  --bulma-radius: 0;
+  --bulma-radius-medium: 0;
+  --bulma-radius-large: 0;
+  --bulma-radius-rounded: 0;
+}
+
+
+*, *::before, *::after {
+  border-radius: 0 !important;
+}
+
+.navbar {
+  border-bottom: 3px solid #c21212;
+}
+
+a.navbar-item:hover {
+  color: #c21212;
+}
+
 .cell-title {
   max-width: 26rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.logo {
+  width: 90px;
+  padding: 10px;
 }
 
 .cell-nowrap {
@@ -21,8 +69,8 @@
 }
 
 .log-error {
-  border-left-color: #f14668;
-  background: #feecf0;
+  border-left-color: #c21212;
+  background: #fcecec;
 }
 
 .log-warning {

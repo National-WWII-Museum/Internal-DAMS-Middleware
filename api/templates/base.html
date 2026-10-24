@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="theme-light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,12 +10,13 @@
 <body>
   <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
-       <a class="navbar-item has-text-weight-bold" href="/">Records in Que</a>
+      <img class="logo" src="{{ url_for('static', path='/logo.svg') }}" />
     </div>
     <div class="navbar-menu is-active">
       <div class="navbar-start">
-        <a class="navbar-item" href="/holding.csv">Download (CSV)</a>
+        <a class="navbar-item" href="/">Records in Que</a>
         <a class="navbar-item" href="/logs">Logs</a>
+        <a class="navbar-item" href="/holding.csv">Download (CSV)</a>
       </div>
     </div>
   </nav>
@@ -25,5 +26,13 @@
       {% block content %}{% endblock %}
     </div>
   </section>
+
+  <footer class="p-2 has-background-primary">
+  <div class="content has-text-centered has-text-white ">
+    <p class="is-size-7">
+      This is a tool built and maintained by the Marcomms department of the National WW2 Museum.
+    </p>
+  </div>
+</footer>
 </body>
 </html>
