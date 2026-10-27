@@ -1,4 +1,4 @@
-STATUSES = ("pending", "ready", "holding", "missing_file")
+STATUSES = ("pending", "ready", "holding")
 
 
 def get_status_counts(conn):
@@ -94,3 +94,24 @@ def get_holding_export(conn):
         "FROM dbo.v_emu_holding ORDER BY first_seen_at ASC, irn ASC"
     )
     return [c[0] for c in cur.description], cur.fetchall()
+
+def find_by_accession(conn, accession):
+    """[(irn, status)] for every staging row with this accession number."""
+    rows = conn.execute(
+        "SELECT irn, status FROM dbo.emu_staging WHERE accession_number = ?",
+        [accession],
+    ).fetchall()
+    return [(r.irn, r.status) for r in rows]
+
+
+def promote_holding_to_ready(conn, irn):
+    """Move one 'holding' row to 'ready' (resetting synced / sync_failed so the
+    ready DSS task picks it up, same as routing does). Only touches the row if
+    it is still 'holding'; returns True if it changed."""
+    cur = conn.execute(
+        "UPDATE dbo.emu_staging SET status = 'ready', synced = 0, sync_failed = 0 "
+        "WHERE irn = ? AND status = 'holding'",
+        [irn],
+    )
+    conn.commit()
+    return cur.rowcount == 1

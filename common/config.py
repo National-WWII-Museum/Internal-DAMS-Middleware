@@ -30,3 +30,9 @@ DB_CONNECTION_STRING = (
 # Folder holding the middleware's *.log files (read by the API's Logs page).
 # Defaults to <repo root>/data, where the middleware writes them.
 LOG_DIR = Path(os.getenv("LOG_DIR") or Path(__file__).resolve().parent.parent / "data")
+# Must match the token NetX sends in each webhook body (set per subscription
+# in NetX). The webhook endpoint rejects everything while this is unset.
+NETX_WEBHOOK_TOKEN = (os.getenv("NETX_WEBHOOK_TOKEN") or "").strip() or None
+# Comma-separated NetX systemEventType values the webhook acts on, e.g.
+# "ASSET_CREATE". Blank = act on every event type (each is still logged).
+NETX_WEBHOOK_EVENTS = {e.strip() for e in (os.getenv("NETX_WEBHOOK_EVENTS") or "").split(",") if e.strip()}

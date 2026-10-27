@@ -266,3 +266,16 @@ def set_asset_attributes(asset_id, attributes, session=None, timeout=DEFAULT_TIM
     set_asset_attributes(123, {"IRN": ["229430"]}). Each value is a list.
     See https://developer.netx.net/#setassetattributes"""
     return call("setAssetAttributes", [asset_id, attributes], session=session, timeout=timeout)
+
+
+def get_asset(asset_id, session=None, timeout=DEFAULT_TIMEOUT):
+    """One asset by its NetX id (id, base, file, attributes), or None if NetX
+    returns nothing for it. See https://developer.netx.net/#getassets"""
+    result = call(
+        "getAssets",
+        [[int(asset_id)], {"data": ["asset.id", "asset.base", "asset.file", "asset.attributes"]}],
+        session=session,
+        timeout=timeout,
+    )
+    assets = result.get("results", []) if isinstance(result, dict) else result
+    return assets[0] if assets else None

@@ -114,7 +114,6 @@ def upsert_staging_record(conn, irn, row):
 STATUS_PENDING = "pending"   # staged, not routed yet - neither DSS task reads it
 STATUS_READY = "ready"       # NetX has an asset with this IRN
 STATUS_HOLDING = "holding"   # NetX has none yet; re-checked every run
-STATUS_MISSING_FILE = "missing_file"  # no longer set by routing; kept so rows already parked stay valid
 
 _STATUS_CHUNK = 500  # well under SQL Server's 2100-parameter limit
 
