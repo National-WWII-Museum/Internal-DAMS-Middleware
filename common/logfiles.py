@@ -12,7 +12,7 @@ from datetime import datetime
 
 from .config import LOG_DIR
 
-LOG_NAMES = ("pipeline", "polling", "sweep", "routing", "requeue")
+LOG_NAMES = ("pipeline", "polling", "sweep", "routing", "requeue", "webhook")
 
 # How many rotated copies the middleware keeps (backupCount in its handler).
 MAX_BACKUPS = 5

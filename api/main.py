@@ -1,4 +1,6 @@
+import json
 import logging
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Literal, Optional
 
@@ -7,12 +9,24 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from common import staging
+from common import logfiles, staging
 from common.db import get_connection, get_db
 
 from .routers import logs, ui
 
 logger = logging.getLogger(__name__)
+
+# Webhook test payloads go to data\webhook.log (viewable on the Logs page),
+# since the API runs as a service with no console to watch.
+webhook_logger = logging.getLogger("api.webhook")
+webhook_logger.setLevel(logging.INFO)
+webhook_logger.propagate = False
+if not webhook_logger.handlers:
+    _webhook_log = logfiles.log_path("webhook")
+    _webhook_log.parent.mkdir(exist_ok=True)
+    _handler = RotatingFileHandler(_webhook_log, maxBytes=5_000_000, backupCount=5, encoding="utf-8")
+    _handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+    webhook_logger.addHandler(_handler)
 
 app = FastAPI(title="Records in Que")
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
@@ -60,7 +74,7 @@ async def webhook_test(request: Request):
         "query": dict(request.query_params),
         "body": body,
     }
-    logger.info("Webhook test received: %s", payload)
+    webhook_logger.info("Webhook test received:\n%s", json.dumps(payload, indent=2, default=str))
     return payload
 
 
