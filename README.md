@@ -243,10 +243,7 @@ Content-Type: application/json
 ## References
 
 - Axiell EMu REST API documentation (see project docs — treated as source of truth for this integration; distinguish EMu 9-specific behavior from generic guidance where docs allow)
+
+## Packages/tools to review
+
 - `xmu` community tooling (XML batch workflows, not REST): https://xmu.readthedocs.io
-
-
-## FOlder structure update
-- Make a new venv at the repo root, since the old one had webapp/ paths baked in: python -m venv .venv, activate it, then pip install -e .
-
-- Run it from the repo root: uvicorn api.main:app --reload. It used to be app.main:app, so update the NSSM service path and working directory to match when you deploy.

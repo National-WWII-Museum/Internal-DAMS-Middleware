@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Literal, Optional
 
 import pyodbc
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -44,6 +44,24 @@ def health_db():
         logger.exception("Database health check failed")
         raise HTTPException(status_code=503, detail="database unreachable")
     return {"status": "ok", "database": "reachable"}
+
+
+# Temporary: echoes back whatever a webhook sends so we can inspect the payload.
+@app.api_route("/webhook/test", methods=["GET", "POST", "PUT", "PATCH"])
+async def webhook_test(request: Request):
+    raw = await request.body()
+    try:
+        body = await request.json()
+    except ValueError:
+        body = raw.decode("utf-8", errors="replace")
+    payload = {
+        "method": request.method,
+        "headers": dict(request.headers),
+        "query": dict(request.query_params),
+        "body": body,
+    }
+    logger.info("Webhook test received: %s", payload)
+    return payload
 
 
 @app.get("/api/status-counts")
