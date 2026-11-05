@@ -64,6 +64,20 @@ REFERENCE_FIELD_MAP = {
     },
 }
 
+# Only these ObjRecordType values are pulled by the polling searches. EMu's
+# 'exact' operator is case-insensitive, so 'photograph' matches 'Photograph'.
+RECORD_TYPES = ["Document", "Object", "Oral History", "Photograph"]
+
+
+def record_type_filter():
+    """Filter clause matching any of RECORD_TYPES - add it to a search's AND list."""
+    return {
+        "OR": [
+            {"data.ObjRecordType": {"exact": {"value": record_type}}}
+            for record_type in RECORD_TYPES
+        ]
+    }
+
 
 class EMuAPIError(Exception):
     """Raised when the EMu REST API can't be reached or returns a non-2xx response.
@@ -291,7 +305,8 @@ def search_modified_on(module, date, fields=None, page_size=500, timeout=30):
                         "mode": "date",
                     }
                 }
-            }
+            },
+            record_type_filter(),
         ]
     }
 
@@ -384,7 +399,8 @@ def search_modified_since(module, since_date, fields=None, page_size=500, timeou
                         "mode": "date",
                     }
                 }
-            }
+            },
+            record_type_filter(),
         ]
     }
 

@@ -50,7 +50,8 @@ def search_modified_between(module, start_date, end_date, fields=None, page_size
                         "mode": "date",
                     }
                 }
-            }
+            },
+            emu_client.record_type_filter(),
         ]
     }
 
