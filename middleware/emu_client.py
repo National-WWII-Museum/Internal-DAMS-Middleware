@@ -48,6 +48,7 @@ PLACEHOLDER_FIELDS = [
     "data.ExtInterviewSummary",
     "data.SummaryData",
     "data.WebTGM_tab",
+    "data.AssParentObjectRef"
 ]
 
 # Reference fields to follow into another module, and which fields to pull
@@ -62,6 +63,10 @@ REFERENCE_FIELD_MAP = {
         "module": "emultimedia",
         "fields": ["MulIdentifier"],
     },
+    "AssParentObjectRef": {
+        "module": "ecatalogue",
+        "fields": ["WebTitle"]
+    }
 }
 
 # Only these ObjRecordType values are pulled by the polling searches. EMu's
