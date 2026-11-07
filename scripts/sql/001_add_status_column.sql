@@ -7,7 +7,8 @@
 --
 -- Idempotent. Existing rows become 'pending' and are routed on the next
 -- `python -m middleware.routing` run.
--- The emusync login needs no new grant: table-level SELECT/UPDATE covers the new column.
+-- The emusync login needs no new grant for the status column (table-level SELECT/UPDATE
+-- covers it), but the view below DOES need its own SELECT grant - see the end of this file.
 
 USE EmuStaging;
 GO
@@ -27,4 +28,9 @@ CREATE OR ALTER VIEW dbo.v_emu_holding AS
 SELECT irn, title, file_name, accession_number, first_seen_at, updated_at
 FROM dbo.emu_staging
 WHERE status = 'holding';
+GO
+
+-- A table-level grant does not cover a view: without this the web app's /holding.csv
+-- fails with SQL error 229 (shown to the browser as "database unavailable").
+GRANT SELECT ON dbo.v_emu_holding TO emusync;
 GO
