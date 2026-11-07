@@ -40,7 +40,7 @@ C:\ww2-emu-netx\
 ## Why split it this way
 
 - `middleware/` is the actual product — the code that eventually runs continuously in production (the polling loop, the webhook listener).
-- `api/` is the FastAPI service: the read-only staging viewer today, and later the endpoints NetX webhooks call and the ones that return data to EMu. Add a new concern as a new file in `api/routers/` plus one `include_router` line in `api/main.py`. Keep route handlers thin; put real logic in functions they call.
+- `api/` is the FastAPI service: the staging viewer today (with a delete-selected action for clearing records out of the queue), and later the endpoints NetX webhooks call and the ones that return data to EMu. Add a new concern as a new file in `api/routers/` plus one `include_router` line in `api/main.py`. Keep route handlers thin; put real logic in functions they call.
 - `common/` holds what both `middleware/` and `api/` need, so the two never drift apart. `middleware/config.py` still has its own copy of the DB settings; moving it onto `common/` is a possible later cleanup.
 - `scripts/` all things you run manually, once in a while, to explore or diagnose something. 
 - `data/` is output, not input — schema JSON, CSVs, logs. (Sync state lives on a SQL Server DB on a different on site VM.)
@@ -96,6 +96,13 @@ python -m uvicorn api.main:app --reload
 ```
 
 Checks: `/health` (app is up), `/health/db` (database reachable), `/` (records table), `/holding.csv` (CSV download), `/logs` (middleware logs, with a warnings/errors filter).
+
+**Removing records from the queue.** On the records page, tick one or more rows and click **Remove selected**. This sends `POST /records/delete` with the selected IRNs, deletes those rows from `dbo.emu_staging`, then redirects (303) back to the same filtered page with a "Removed N records" banner.
+
+- Rows with `status = 'ready'` have no checkbox unless `sync_failed = 1`: the NetX DSS task clears finished ready rows itself. The rule lives in `DELETABLE_SQL` in `common/staging.py`; the checkbox condition in `records.html` must match it.
+- Deletion is permanent, and it is not a block. If the EMu record is modified again, the next poll re-stages it as `pending`.
+- Every delete is logged (IRNs and client IP) to `data\staging.log`, shown on the **Logs** page. The page has no login, so this is the audit trail.
+- The `emusync` login needs `DELETE` on `dbo.emu_staging` (the DSS cleanup callback already uses it). Form posts need `python-multipart`, which `pip install -e .` now installs.
 
 If other machines can't connect, open the port once (admin PowerShell):
 
@@ -164,14 +171,13 @@ Sets `status = 'pending'` and clears `synced` / `sync_failed`; the next routing 
 ```powershell
 python -m middleware.requeue --failed               # ready rows whose DSS write failed
 python -m middleware.requeue --holding              # force a re-check of every holding row
-python -m middleware.requeue --missing-file         # every missing_file row
 python -m middleware.requeue --irn 229430 118822    # specific IRNs, any status
 python -m middleware.routing                        # then re-route
 ```
 
 ### Logs
 
-`data\pipeline.log`, `data\polling.log`, `data\sweep.log`, `data\routing.log`, `data\requeue.log`. Each rotates at about 5 MB and keeps 5 older copies (`pipeline.log.1`, `.2`, ...). The web app's **Logs** page (`/logs`) shows them newest-first with a warnings/errors filter; it reads the folder in `LOG_DIR` (default `data\`).
+`data\pipeline.log`, `data\polling.log`, `data\sweep.log`, `data\routing.log`, `data\requeue.log`, `data\staging.log` (deletes made from the web app). Each rotates at about 5 MB and keeps 5 older copies (`pipeline.log.1`, `.2`, ...). The web app's **Logs** page (`/logs`) shows them newest-first with a warnings/errors filter; it reads the folder in `LOG_DIR` (default `data\`).
 
 ```powershell
 Get-Content data\pipeline.log -Tail 50              # last 50 lines

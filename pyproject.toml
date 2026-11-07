@@ -13,6 +13,7 @@ dependencies = [
     "fastapi",
     "uvicorn[standard]",
     "jinja2",
+    "python-multipart",
 ]
 
 [tool.setuptools.packages.find]

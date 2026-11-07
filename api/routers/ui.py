@@ -1,11 +1,12 @@
 import csv
 import io
+import logging
 from datetime import date, datetime
-from typing import Optional
+from typing import List, Optional
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends, Query, Request
-from fastapi.responses import Response
+from fastapi import APIRouter, Depends, Form, Query, Request
+from fastapi.responses import RedirectResponse, Response
 
 from common import staging
 from common.db import get_db
@@ -13,6 +14,8 @@ from common.db import get_db
 from ..templating import templates
 
 router = APIRouter()
+# File handler is set up in api/main.py -> data\staging.log
+staging_log = logging.getLogger("api.staging")
 
 PAGE_SIZE = 50
 SORT_LABELS = {
@@ -45,6 +48,7 @@ def records_page(
     failed: bool = False,
     sort: str = "updated",
     page: int = Query(1, ge=1),
+    deleted: Optional[int] = Query(None, ge=0),
     conn=Depends(get_db),
 ):
     # The form can send blanks or odd values; normalise instead of erroring.
@@ -72,10 +76,42 @@ def records_page(
             "total_pages": total_pages,
             "start": start,
             "end": start + len(items) - 1 if items else 0,
+            "deleted": deleted,
+            # where the delete form sends the browser back to (same filters/page)
+            "self_url": _records_url(status, q, failed, sort, page),
             "prev_url": _records_url(status, q, failed, sort, page - 1) if page > 1 else None,
             "next_url": _records_url(status, q, failed, sort, page + 1) if page < total_pages else None,
         },
     )
+
+
+def _safe_next(url):
+    """Only redirect to a path on this site ('/', '/?status=holding'), never to
+    another host - blocks open redirects through the hidden `next` field."""
+    if url.startswith("/") and not url.startswith("//") and "\\" not in url:
+        return url
+    return "/"
+
+
+@router.post("/records/delete")
+def delete_records(
+    request: Request,
+    irns: List[str] = Form(...),
+    next: str = Form("/"),
+    conn=Depends(get_db),
+):
+    cleaned = list(dict.fromkeys(i.strip() for i in irns if i.strip()))  # trim, de-dupe
+    count = staging.delete_records(conn, cleaned) if cleaned else 0
+    client = request.client.host if request.client else "unknown"
+    staging_log.warning(
+        "Dashboard delete from %s: %d of %d selected row(s) removed (IRNs: %s)",
+        client, count, len(cleaned), ", ".join(cleaned),
+    )
+
+    # 303 = browser follows with a GET, so a refresh can't re-send the delete.
+    target = _safe_next(next)
+    sep = "&" if "?" in target else "?"
+    return RedirectResponse(f"{target}{sep}deleted={count}", status_code=303)
 
 
 def _csv_cell(value):

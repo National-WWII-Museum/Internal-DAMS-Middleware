@@ -1,4 +1,6 @@
-STATUSES = ("pending", "ready", "holding", "missing_file")
+# 'missing_file' is no longer set by routing, so the UI doesn't offer it (the
+# DB constraint still allows it for rows parked earlier).
+STATUSES = ("pending", "ready", "holding")
 
 
 def get_status_counts(conn):
@@ -94,3 +96,28 @@ def get_holding_export(conn):
         "FROM dbo.v_emu_holding ORDER BY first_seen_at ASC, irn ASC"
     )
     return [c[0] for c in cur.description], cur.fetchall()
+
+
+_DELETE_CHUNK = 500  # well under SQL Server's 2100-parameter limit
+
+# The one rule for what the dashboard may delete: a 'ready' row belongs to the
+# sync_failed = 1 - can be removed by hand. The records table uses the same
+# rule to decide which rows get a checkbox.
+DELETABLE_SQL = "(status <> 'ready' OR sync_failed = 1)"
+
+
+def delete_records(conn, irns):
+    """Delete the given IRNs from emu_staging (only rows allowed by
+    DELETABLE_SQL). Returns how many rows were deleted. All chunks share one
+    transaction: if any fails nothing is deleted."""
+    deleted = 0
+    for i in range(0, len(irns), _DELETE_CHUNK):
+        chunk = irns[i:i + _DELETE_CHUNK]
+        marks = ",".join("?" * len(chunk))
+        cur = conn.execute(
+            f"DELETE FROM dbo.emu_staging WHERE irn IN ({marks}) AND {DELETABLE_SQL}",
+            chunk,
+        )
+        deleted += cur.rowcount
+    conn.commit()
+    return deleted
