@@ -25,7 +25,7 @@ from datetime import date, datetime
 # emu_staging columns the middleware writes. Everything else on the table is
 # either DB-managed bookkeeping (irn, synced, sync_failed, synced_at,
 # first_seen_at, updated_at) or reserved for fields with no EMu source yet
-# (alternate_title, collection_title, person, honorees, powkia, getty_geo_id,
+# (alternate_title, person, honorees, powkia, getty_geo_id,
 # asset_url, asset_type).
 WRITE_COLUMNS = [
     "date_modified",
@@ -35,6 +35,7 @@ WRITE_COLUMNS = [
     "title",
     "accession_number",
     "credit_line",
+    "collection_title",
     "collection_description",
     "donor_name",
     "hometown",
@@ -167,14 +168,29 @@ def _extract_modified(record):
     return d, _truncate(raw_time, 20), combined
 
 
-def _extract_geography(record):
-    """(latitude, longitude, geo_hierarchy) from SubGeographyRef_tab, which
-    emu_client.resolve_references  resolves this. 
-    Uses the first reference if EMu returns several;"""
-    ref = record.get("SubGeographyRef_tab")
+def _first_ref(record, ref_field):
+    """First resolved entry of a *Ref / *Ref_tab field (a dict), or None.
+    ref_field must be in emu_client.REFERENCE_FIELD_MAP so that
+    resolve_references has swapped the stub for the linked record's fields."""
+    ref = record.get(ref_field)
     if isinstance(ref, list):
         ref = ref[0] if ref else None
-    if not isinstance(ref, dict):
+    return ref if isinstance(ref, dict) else None
+
+
+def _ref_value(record, ref_field, field):
+    """Single value of `field` on the first linked record of `ref_field`.
+    For a multi-valued (_tab) field use _pack_csv(_first_ref(...).get(...))."""
+    ref = _first_ref(record, ref_field)
+    return _scalar(ref.get(field)) if ref else None
+
+
+def _extract_geography(record):
+    """(latitude, longitude, geo_hierarchy) from SubGeographyRef_tab, which
+    emu_client.resolve_references  resolves this.
+    Uses the first reference if EMu returns several;"""
+    ref = _first_ref(record, "SubGeographyRef_tab")
+    if ref is None:
         return None, None, None
     return (
         _truncate(_scalar(ref.get("TgnNumericLatitude")), 100),
@@ -188,12 +204,7 @@ def _extract_file_name(record):
     emu_client.resolve_references has resolved into the emultimedia record.
     Uses the first linked asset if a record has several. The full filename
     including extension is kept (e.g. '2019.123.4_001.jpg')."""
-    ref = record.get("MulMultiMediaRef_tab")
-    if isinstance(ref, list):
-        ref = ref[0] if ref else None
-    if not isinstance(ref, dict):
-        return None
-    return _scalar(ref.get("MulIdentifier"))
+    return _ref_value(record, "MulMultiMediaRef_tab", "MulIdentifier")
 
 
 def record_to_staging_row(record):
@@ -209,6 +220,8 @@ def record_to_staging_row(record):
         "title": _truncate(_scalar(record.get("WebTitle")), 1000),
         "accession_number": _truncate(_scalar(record.get("AcqAccessionNumber")), 200),
         "credit_line": _truncate(_scalar(record.get("WebCreditLine")), 1000),
+        # WebTitle of the parent (collection) catalogue record
+        "collection_title": _clean(_ref_value(record, "AssParentObjectRef", "WebTitle")),
         "collection_description": _clean(_scalar(record.get("WebCollectionDescription"))),
         "donor_name": _truncate(_scalar(record.get("WebDonorName")), 510),
         "hometown": _truncate(_scalar(record.get("WebHometown")), 510),
