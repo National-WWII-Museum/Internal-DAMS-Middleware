@@ -28,6 +28,17 @@ if not webhook_logger.handlers:
     _handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
     webhook_logger.addHandler(_handler)
 
+# Manual deletes from the Records page go to data\staging.log
+staging_logger = logging.getLogger("api.staging")
+staging_logger.setLevel(logging.INFO)
+staging_logger.propagate = False
+if not staging_logger.handlers:
+    _staging_log = logfiles.log_path("staging")
+    _staging_log.parent.mkdir(exist_ok=True)
+    _staging_handler = RotatingFileHandler(_staging_log, maxBytes=5_000_000, backupCount=5, encoding="utf-8")
+    _staging_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+    staging_logger.addHandler(_staging_handler)
+
 app = FastAPI(title="Records in Que")
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 app.include_router(ui.router)
@@ -84,7 +95,7 @@ def status_counts(conn=Depends(get_db)):
 
 @app.get("/api/records")
 def records(
-    status: Optional[Literal["pending", "ready", "holding", "missing_file"]] = None,
+    status: Optional[Literal["pending", "ready", "holding"]] = None,
     q: Optional[str] = Query(None, max_length=100),
     failed: bool = False,
     sort: Literal["updated", "newest", "oldest"] = "updated",

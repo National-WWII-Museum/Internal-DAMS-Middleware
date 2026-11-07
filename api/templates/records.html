@@ -57,14 +57,29 @@
   </div>
 </form>
 
+{% if deleted is not none %}
+<div class="notification {% if deleted %}is-success{% else %}is-warning{% endif %} is-light">
+  {% if deleted %}Removed {{ deleted }} record{{ '' if deleted == 1 else 's' }} from the queue.
+  {% else %}Nothing was removed. Records that are ready and still syncing can't be deleted here.{% endif %}
+</div>
+{% endif %}
+
 <p class="mb-3 has-text-grey">
   {% if total %}Showing {{ start }}–{{ end }} of {{ total }}{% else %}0 results{% endif %}
 </p>
+
+<form method="post" action="/records/delete" id="delete-form">
+<input type="hidden" name="next" value="{{ self_url }}">
+<div class="mb-3">
+  <button class="button is-danger" type="submit" id="delete-btn" disabled>Remove selected</button>
+  <span class="has-text-grey ml-2" id="delete-count"></span>
+</div>
 
 <div class="table-container">
   <table class="table is-fullwidth is-striped is-hoverable">
     <thead>
       <tr>
+        <th><input type="checkbox" id="select-all" aria-label="Select all removable records on this page"></th>
         <th>IRN</th>
         <th>Status</th>
         <th>Accession no.</th>
@@ -78,6 +93,12 @@
     <tbody>
       {% for r in items %}
       <tr>
+        <td>
+          {# same rule as staging.DELETABLE_SQL: ready rows are DSS's, unless stuck #}
+          {% if r.status != 'ready' or r.sync_failed %}
+          <input type="checkbox" class="row-check" name="irns" value="{{ r.irn }}" aria-label="Select record {{ r.irn }}">
+          {% endif %}
+        </td>
         <td class="cell-nowrap">{{ r.irn }}</td>
         <td>{{ status_tag(r.status) }}</td>
         <td class="cell-nowrap">{{ r.accession_number or '' }}</td>
@@ -93,11 +114,45 @@
         </td>
       </tr>
       {% else %}
-      <tr><td colspan="8" class="has-text-centered has-text-grey py-5">No records match these filters.</td></tr>
+      <tr><td colspan="9" class="has-text-centered has-text-grey py-5">No records match these filters.</td></tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
+</form>
+
+<script>
+  (function () {
+    var form = document.getElementById("delete-form");
+    var all = document.getElementById("select-all");
+    var btn = document.getElementById("delete-btn");
+    var label = document.getElementById("delete-count");
+    var boxes = Array.prototype.slice.call(form.querySelectorAll(".row-check"));
+
+    function refresh() {
+      var n = boxes.filter(function (b) { return b.checked; }).length;
+      btn.disabled = n === 0;
+      label.textContent = n ? n + " selected" : "";
+      all.checked = n > 0 && n === boxes.length;
+      all.indeterminate = n > 0 && n < boxes.length;
+    }
+
+    all.addEventListener("change", function () {
+      boxes.forEach(function (b) { b.checked = all.checked; });
+      refresh();
+    });
+    boxes.forEach(function (b) { b.addEventListener("change", refresh); });
+
+    form.addEventListener("submit", function (e) {
+      var n = boxes.filter(function (b) { return b.checked; }).length;
+      var msg = "Remove " + n + " record" + (n === 1 ? "" : "s") +
+        " from the queue?\n\nIf the EMu record is edited again it will be re-added on the next poll.";
+      if (!window.confirm(msg)) { e.preventDefault(); }
+    });
+
+    refresh();
+  })();
+</script>
 
 <nav class="pagination is-centered" role="navigation" aria-label="pagination">
   {% if prev_url %}<a class="pagination-previous" href="{{ prev_url }}">Previous</a>
