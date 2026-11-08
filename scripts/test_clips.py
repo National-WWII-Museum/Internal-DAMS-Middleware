@@ -8,9 +8,14 @@ In `constituent`, clips are type 4 (seen on asset 206839: constituent_id,
 image_id, type, title, start_time, end_time in milliseconds, mod_date).
 Keyframes use a different type; use --type to look at other rows.
 
-Connection: same server and login as the rest of the app (DB_* in .env), but
-pointed at the NetX database. Set NETX_DB_NAME in .env or pass --database.
-The login needs SELECT on the NetX database. Use a read-only account.
+Connection: same server as the rest of the app (DB_* in .env), but pointed at
+the NetX database with its own read-only login. Set in .env:
+    NETX_DB_NAME=NetX
+    NETX_DB_USER=netx_readonly
+    NETX_DB_PASSWORD=...
+(create the login with scripts/sql/002_netx_readonly_login.sql). If the user
+and password are unset it falls back to DB_USER/DB_PASSWORD, which will not
+have access to the NetX database.
 
 Run from the repo root:
     python -m scripts.test_clips 206839 --database <NetX DB name>
@@ -39,13 +44,16 @@ def ms_to_clock(ms):
 
 def connect(database):
     # Reuse the app's server/login/driver settings, swapping only the database.
+    # Prefer the dedicated read-only login (NETX_DB_USER / NETX_DB_PASSWORD).
+    user = os.getenv("NETX_DB_USER") or config.DB_USER
+    password = os.getenv("NETX_DB_PASSWORD") or config.DB_PASSWORD
     server = f"{config.DB_HOST},{config.DB_PORT}" if config.DB_PORT else config.DB_HOST
     conn_str = (
         f"DRIVER={{{config.DB_DRIVER}}};"
         f"SERVER={server};"
         f"DATABASE={database};"
-        f"UID={config.DB_USER};"
-        f"PWD={config.DB_PASSWORD};"
+        f"UID={user};"
+        f"PWD={password};"
         f"Encrypt={config.DB_ENCRYPT};"
         f"TrustServerCertificate={config.DB_TRUST_SERVER_CERT};"
     )
