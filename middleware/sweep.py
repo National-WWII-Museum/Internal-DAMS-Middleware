@@ -30,13 +30,12 @@ asset has an IRN it drops out of the search.
 """
 import argparse
 import logging
-from logging.handlers import RotatingFileHandler
 import os
 import sys
-from pathlib import Path
 
 from . import emu_client
 from . import netx_client
+from common.logging_setup import setup_job_logging
 
 logger = logging.getLogger(__name__)
 
@@ -154,18 +153,9 @@ def run(days=DEFAULT_DAYS, apply=False):
     return counts
 
 
-def _setup_logging():
-    log_path = Path(__file__).resolve().parent.parent / "data" / "sweep.log"
-    log_path.parent.mkdir(exist_ok=True)
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        handlers=[logging.StreamHandler(), RotatingFileHandler(log_path, maxBytes=5_000_000, backupCount=5, encoding="utf-8")],
-    )
-
 
 if __name__ == "__main__":
-    _setup_logging()
+    setup_job_logging("sweep")
     parser = argparse.ArgumentParser(description="Tag recent IRN-less NetX assets via their accession number.")
     parser.add_argument("--days", type=int, default=DEFAULT_DAYS,
                         help=f"only assets imported in the last N days (default {DEFAULT_DAYS})")

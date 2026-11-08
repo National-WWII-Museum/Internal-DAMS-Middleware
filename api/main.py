@@ -1,6 +1,5 @@
 import json
 import logging
-from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 import pyodbc
@@ -8,7 +7,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from common import logfiles
+from common.logging_setup import setup_named_logger
 from common.db import get_connection
 
 from .routers import clips, logs, records, ui
@@ -17,26 +16,10 @@ logger = logging.getLogger(__name__)
 
 # Webhook test payloads go to data\webhook.log (viewable on the Logs page),
 # since the API runs as a service with no console to watch.
-webhook_logger = logging.getLogger("api.webhook")
-webhook_logger.setLevel(logging.INFO)
-webhook_logger.propagate = False
-if not webhook_logger.handlers:
-    _webhook_log = logfiles.log_path("webhook")
-    _webhook_log.parent.mkdir(exist_ok=True)
-    _handler = RotatingFileHandler(_webhook_log, maxBytes=5_000_000, backupCount=5, encoding="utf-8")
-    _handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
-    webhook_logger.addHandler(_handler)
+webhook_logger = setup_named_logger("api.webhook", "webhook")
 
 # Manual deletes from the Records page go to data\staging.log
-staging_logger = logging.getLogger("api.staging")
-staging_logger.setLevel(logging.INFO)
-staging_logger.propagate = False
-if not staging_logger.handlers:
-    _staging_log = logfiles.log_path("staging")
-    _staging_log.parent.mkdir(exist_ok=True)
-    _staging_handler = RotatingFileHandler(_staging_log, maxBytes=5_000_000, backupCount=5, encoding="utf-8")
-    _staging_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
-    staging_logger.addHandler(_staging_handler)
+staging_logger = setup_named_logger("api.staging", "staging")
 
 app = FastAPI(title="Records in Que")
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")

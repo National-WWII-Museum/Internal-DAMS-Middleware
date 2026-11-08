@@ -23,12 +23,11 @@ Log: data/pipeline.log. Run from the project folder ("Start in").
 """
 import argparse
 import logging
-from logging.handlers import RotatingFileHandler
 import sys
 from datetime import datetime
-from pathlib import Path
 
 from . import polling, polling_date_range, routing, sweep
+from common.logging_setup import setup_job_logging
 
 logger = logging.getLogger(__name__)
 
@@ -68,18 +67,9 @@ def run(days=sweep.DEFAULT_DAYS, skip_polling=False, from_date=None, to_date=Non
     _step("routing", routing.run)
 
 
-def _setup_logging():
-    log_path = Path(__file__).resolve().parent.parent / "data" / "pipeline.log"
-    log_path.parent.mkdir(exist_ok=True)
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        handlers=[logging.StreamHandler(), RotatingFileHandler(log_path, maxBytes=5_000_000, backupCount=5, encoding="utf-8")],
-    )
-
 
 if __name__ == "__main__":
-    _setup_logging()
+    setup_job_logging("pipeline")
     parser = argparse.ArgumentParser(description="Run polling, sweep and routing in order.")
     parser.add_argument("--days", type=int, default=sweep.DEFAULT_DAYS,
                         help=f"sweep look-back in days (default {sweep.DEFAULT_DAYS})")

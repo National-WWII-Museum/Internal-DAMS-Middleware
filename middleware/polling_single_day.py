@@ -4,13 +4,12 @@ Same as polling.py, but pulls just one day's worth of updates via
 emu_client.search_modified_on().
 """
 import logging
-from logging.handlers import RotatingFileHandler
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 
 from . import state
 from . import emu_client
 from . import mapping
+from common.logging_setup import setup_job_logging
 
 MODULE = "ecatalogue"  # starting with just Catalogue for now
 
@@ -70,20 +69,11 @@ def run(date=None):
             conn.close()
 
 
-def _setup_logging():
-    log_path = Path(__file__).resolve().parent.parent / "data" / "polling.log"
-    log_path.parent.mkdir(exist_ok=True)
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        handlers=[logging.StreamHandler(), RotatingFileHandler(log_path, maxBytes=5_000_000, backupCount=5, encoding="utf-8")],
-    )
-
 
 if __name__ == "__main__":
     import sys
 
-    _setup_logging()
+    setup_job_logging("polling")
     if len(sys.argv) > 2:
         print("Usage: python -m middleware.polling_single_day [YYYY-MM-DD]")
         sys.exit(1)

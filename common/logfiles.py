@@ -12,9 +12,12 @@ from datetime import datetime
 
 from .config import LOG_DIR
 
+# Every log file the project writes. To add one, add its name here and call
+# logging_setup.setup_job_logging("<name>") from the job.
 LOG_NAMES = ("pipeline", "polling", "sweep", "routing", "requeue", "webhook", "staging")
 
-# How many rotated copies the middleware keeps (backupCount in its handler).
+# How many rotated copies are kept. logging_setup uses this as the handlers'
+# backupCount, so the writers and this reader always agree.
 MAX_BACKUPS = 5
 
 # Never read more than this from the end of a file, so an old log that grew

@@ -177,7 +177,7 @@ python -m middleware.routing                        # then re-route
 
 ### Logs
 
-`data\pipeline.log`, `data\polling.log`, `data\sweep.log`, `data\routing.log`, `data\requeue.log`, `data\staging.log` (deletes made from the web app). Each rotates at about 5 MB and keeps 5 older copies (`pipeline.log.1`, `.2`, ...). The web app's **Logs** page (`/logs`) shows them newest-first with a warnings/errors filter; it reads the folder in `LOG_DIR` (default `data\`).
+`data\pipeline.log`, `data\polling.log`, `data\sweep.log`, `data\routing.log`, `data\requeue.log`, `data\staging.log` (deletes made from the web app). Each rotates at about 5 MB and keeps 5 older copies (`pipeline.log.1`, `.2`, ...). The names, rotation size and copy count are defined once, in `common/logging_setup.py` and `common/logfiles.py` (`LOG_NAMES`); a new job calls `setup_job_logging("<name>")` and its name is added to `LOG_NAMES` so the Logs page can show it. The web app's **Logs** page (`/logs`) shows them newest-first with a warnings/errors filter; it reads the folder in `LOG_DIR` (default `data\`).
 
 ```powershell
 Get-Content data\pipeline.log -Tail 50              # last 50 lines

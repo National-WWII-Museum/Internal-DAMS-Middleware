@@ -12,11 +12,10 @@ Options can be combined.
 """
 import argparse
 import logging
-from logging.handlers import RotatingFileHandler
 import sys
-from pathlib import Path
 
 from . import state
+from common.logging_setup import setup_job_logging
 
 logger = logging.getLogger(__name__)
 
@@ -36,15 +35,6 @@ def run(failed=False, holding=False, irns=None):
         conn.close()
     return counts
 
-
-def _setup_logging():
-    log_path = Path(__file__).resolve().parent.parent / "data" / "requeue.log"
-    log_path.parent.mkdir(exist_ok=True)
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        handlers=[logging.StreamHandler(), RotatingFileHandler(log_path, maxBytes=5_000_000, backupCount=5, encoding="utf-8")],
-    )
 
 
 def main(argv=None):
@@ -72,7 +62,7 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    _setup_logging()
+    setup_job_logging("requeue")
     try:
         main()
     except Exception:
