@@ -30,3 +30,19 @@ DB_CONNECTION_STRING = (
 # Folder holding the middleware's *.log files (read by the API's Logs page).
 # Defaults to <repo root>/data, where the middleware writes them.
 LOG_DIR = Path(os.getenv("LOG_DIR") or Path(__file__).resolve().parent.parent / "data")
+
+# Read-only login for the NetX database itself (video clip times live there).
+# Unset = the clips endpoints answer 503 instead of the app failing to start.
+NETX_DB_NAME = os.getenv("NETX_DB_NAME")
+NETX_DB_USER = os.getenv("NETX_DB_USER")
+NETX_DB_PASSWORD = os.getenv("NETX_DB_PASSWORD")
+
+NETX_DB_CONNECTION_STRING = (
+    f"DRIVER={{{DB_DRIVER}}};"
+    f"SERVER={_server};"
+    f"DATABASE={NETX_DB_NAME};"
+    f"UID={NETX_DB_USER};"
+    f"PWD={NETX_DB_PASSWORD};"
+    f"Encrypt={DB_ENCRYPT};"
+    f"TrustServerCertificate={DB_TRUST_SERVER_CERT};"
+) if (NETX_DB_NAME and NETX_DB_USER and NETX_DB_PASSWORD) else None

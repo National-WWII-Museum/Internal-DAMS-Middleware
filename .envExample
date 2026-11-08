@@ -19,3 +19,8 @@ DB_TRUST_SERVER_CERT=yes
 # NetX (DAM)
 NETX_BASE_URL=http://172.30.32.10
 NETX_API_TOKEN=your_netx_api_token
+
+# NetX database (read-only, used by scripts/test_clips.py)
+NETX_DB_NAME=NetX
+NETX_DB_USER=netx_readonly
+NETX_DB_PASSWORD=your_readonly_password

@@ -2,17 +2,16 @@ import json
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Literal, Optional
 
 import pyodbc
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from common import logfiles, staging
-from common.db import get_connection, get_db
+from common import logfiles
+from common.db import get_connection
 
-from .routers import logs, ui
+from .routers import clips, logs, records, ui
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +42,8 @@ app = FastAPI(title="Records in Que")
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 app.include_router(ui.router)
 app.include_router(logs.router)
+app.include_router(clips.router)
+app.include_router(records.router)
 
 @app.exception_handler(pyodbc.Error)
 async def database_error_handler(request, exc):
@@ -87,28 +88,3 @@ async def webhook_test(request: Request):
     }
     webhook_logger.info("Webhook test received:\n%s", json.dumps(payload, indent=2, default=str))
     return payload
-
-
-@app.get("/api/status-counts")
-def status_counts(conn=Depends(get_db)):
-    return staging.get_status_counts(conn)
-
-@app.get("/api/records")
-def records(
-    status: Optional[Literal["pending", "ready", "holding"]] = None,
-    q: Optional[str] = Query(None, max_length=100),
-    failed: bool = False,
-    sort: Literal["updated", "newest", "oldest"] = "updated",
-    page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
-    conn=Depends(get_db),
-):
-    return staging.get_records(
-        conn,
-        status=status,
-        q=(q or "").strip() or None,
-        failed=failed,
-        sort=sort,
-        page=page,
-        page_size=page_size,
-    )
