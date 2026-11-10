@@ -1,27 +1,4 @@
-# 'missing_file' is no longer set by routing, so the UI doesn't offer it (the
-# DB constraint still allows it for rows parked earlier).
 STATUSES = ("pending", "ready", "holding")
-
-
-def get_status_counts(conn):
-    """Row counts per routing status, plus how many rows have sync_failed set."""
-    rows = conn.execute(
-        """
-        SELECT status,
-               COUNT(*) AS total,
-               SUM(CASE WHEN sync_failed = 1 THEN 1 ELSE 0 END) AS failed
-        FROM dbo.emu_staging
-        GROUP BY status
-        """
-    ).fetchall()
-
-    by_status = {s: 0 for s in STATUSES}  # a status with no rows still shows as 0
-    failed = 0
-    for r in rows:
-        by_status[r.status] = r.total
-        failed += r.failed
-
-    return {"total": sum(by_status.values()), "failed": failed, "by_status": by_status}
 
 LIST_COLUMNS = (
     "irn, status, synced, sync_failed, synced_at, first_seen_at, updated_at, "

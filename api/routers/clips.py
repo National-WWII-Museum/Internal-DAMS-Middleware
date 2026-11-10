@@ -6,8 +6,7 @@ JSON endpoints for NetX video clip timestamps, for other systems to pull.
   GET /api/clips?asset_ids=206839,206840
 
 The data comes straight from the NetX database (the NetX JSON-RPC API has no
-clip method), read-only. Times are returned both as raw milliseconds and as
-HH:MM:SS.mmm.
+clip method)
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 

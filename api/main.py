@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from common.logging_setup import setup_named_logger
 from common.db import get_connection
 
-from .routers import clips, logs, records, ui
+from .routers import clips, logs, ui
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,6 @@ app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), na
 app.include_router(ui.router)
 app.include_router(logs.router)
 app.include_router(clips.router)
-app.include_router(records.router)
 
 @app.exception_handler(pyodbc.Error)
 async def database_error_handler(request, exc):
