@@ -6,9 +6,7 @@ EMu search.
 """
 import json
 import logging
-from logging.handlers import RotatingFileHandler
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 
 import requests
 
@@ -16,6 +14,7 @@ from . import config
 from . import state
 from . import emu_client
 from . import mapping
+from common.logging_setup import setup_job_logging
 
 MODULE = "ecatalogue"  # starting with just Catalogue for now
 
@@ -168,20 +167,11 @@ def run(start_date, end_date, update_watermark=True):
             conn.close()
 
 
-def _setup_logging():
-    log_path = Path(__file__).resolve().parent.parent / "data" / "polling.log"
-    log_path.parent.mkdir(exist_ok=True)
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        handlers=[logging.StreamHandler(), RotatingFileHandler(log_path, maxBytes=5_000_000, backupCount=5, encoding="utf-8")],
-    )
-
 
 if __name__ == "__main__":
     import sys
 
-    _setup_logging()
+    setup_job_logging("polling")
     if len(sys.argv) != 3:
         print("Usage: python -m middleware.polling_date_range YYYY-MM-DD YYYY-MM-DD")
         sys.exit(1)

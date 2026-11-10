@@ -24,12 +24,11 @@ aborted run therefore delays records - it never sends them down the wrong
 path.
 """
 import logging
-from logging.handlers import RotatingFileHandler
 import sys
-from pathlib import Path
 
 from . import netx_client
 from . import state
+from common.logging_setup import setup_job_logging
 
 logger = logging.getLogger(__name__)
 
@@ -102,18 +101,9 @@ def run():
             conn.close()
 
 
-def _setup_logging():
-    log_path = Path(__file__).resolve().parent.parent / "data" / "routing.log"
-    log_path.parent.mkdir(exist_ok=True)
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        handlers=[logging.StreamHandler(), RotatingFileHandler(log_path, maxBytes=5_000_000, backupCount=5, encoding="utf-8")],
-    )
-
 
 if __name__ == "__main__":
-    _setup_logging()
+    setup_job_logging("routing")
     try:
         run()
     except Exception:
