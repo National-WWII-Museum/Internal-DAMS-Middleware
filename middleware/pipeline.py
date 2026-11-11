@@ -19,7 +19,7 @@ has its IRN by the time routing looks for it. The NetX DSS task
 
 Stops at the first failing step: later steps are NOT run, the failure is
 logged, and the exit code is 1 (Task Scheduler shows the run as failed).
-Log: data/pipeline.log. Run from the project folder ("Start in").
+Log: logs/pipeline.log. Run from the project folder ("Start in").
 """
 import argparse
 import logging
@@ -63,8 +63,8 @@ def run(days=sweep.DEFAULT_DAYS, skip_polling=False, from_date=None, to_date=Non
               lambda: polling_date_range.run(from_date, end, update_watermark=False))
     else:
         _step("polling", polling.run)
-    _step("sweep", lambda: sweep.run(days=days, apply=True))
-    _step("routing", routing.run)
+        _step("sweep", lambda: sweep.run(days=days, apply=True))
+        _step("routing", routing.run)
 
 
 

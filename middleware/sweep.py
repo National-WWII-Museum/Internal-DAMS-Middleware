@@ -16,8 +16,8 @@ and EMuIrnFromFilename valuelookups in netx-config-files/syncedMetadata.xml;
 this job catches anything those did not (EMu record imported after the upload,
 a lookup that failed, etc.).
 
-If the asset's Accession Number attribute already has a value it is used
-instead of the file name, so a misnamed upload can be fixed by correcting
+If the asset's Accession Number attribute already has a value it is used, 
+so a misnamed upload can be fixed by correcting
 that field in NetX - the next sweep then finds its IRN. Anything it cannot
 place is logged and left alone:
 
