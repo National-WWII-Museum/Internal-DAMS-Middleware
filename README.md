@@ -34,7 +34,7 @@ C:\ww2-emu-netx\
 |   |-- get_sample_records.py
 |   `-- ...
 |
-|-- data\                    <- generated output, not source code
+|-- logs\                    <- generated output, not source code
 ```
 
 ## Why split it this way
@@ -43,7 +43,7 @@ C:\ww2-emu-netx\
 - `api/` is the FastAPI service: the staging viewer today (with a delete-selected action for clearing records out of the queue), and later the endpoints NetX webhooks call and the ones that return data to EMu. Add a new concern as a new file in `api/routers/` plus one `include_router` line in `api/main.py`. Keep route handlers thin; put real logic in functions they call.
 - `common/` holds what both `middleware/` and `api/` need, so the two never drift apart. `middleware/config.py` still has its own copy of the DB settings; moving it onto `common/` is a possible later cleanup.
 - `scripts/` all things you run manually, once in a while, to explore or diagnose something. 
-- `data/` is output, not input — schema JSON, CSVs, logs. (Sync state lives on a SQL Server DB on a different on site VM.)
+- `logs/` is output, not input — schema JSON, CSVs, logs. (Sync state lives on a SQL Server DB on a different on site VM.)
 
 ---
 
@@ -76,7 +76,7 @@ copy .envExample .env
 
 ## Command reference
 
-Run everything from the repo root (`C:\Internal-DAMS-Middleware`) with the venv active. Use `python -m ...` rather than bare `pip` / `uvicorn`: on the VM the `.exe` launchers in `.venv\Scripts` can be blocked ("Access is denied"), but `python -m` works. The API and the middleware share the same `.env`. Every job writes a log to `data\<name>.log`.
+Run everything from the repo root (`C:\Internal-DAMS-Middleware`) with the venv active. Use `python -m ...` rather than bare `pip` / `uvicorn`: on the VM the `.exe` launchers in `.venv\Scripts` can be blocked ("Access is denied"), but `python -m` works. The API and the middleware share the same `.env`. Every job writes a log to `logs\<name>.log`.
 
 ### Setup (once, or after pulling new dependencies)
 
@@ -101,7 +101,7 @@ Checks: `/health` (app is up), `/health/db` (database reachable), `/` (records t
 
 - Rows with `status = 'ready'` have no checkbox unless `sync_failed = 1`: the NetX DSS task clears finished ready rows itself. The rule lives in `DELETABLE_SQL` in `common/staging.py`; the checkbox condition in `records.html` must match it.
 - Deletion is permanent, and it is not a block. If the EMu record is modified again, the next poll re-stages it as `pending`.
-- Every delete is logged (IRNs and client IP) to `data\staging.log`, shown on the **Logs** page. The page has no login, so this is the audit trail.
+- Every delete is logged (IRNs and client IP) to `logs\staging.log`, shown on the **Logs** page. The page has no login, so this is the audit trail.
 - The `emusync` login needs `DELETE` on `dbo.emu_staging` (the DSS cleanup callback already uses it). Form posts need `python-multipart`, which `pip install -e .` now installs.
 
 If other machines can't connect, open the port once (admin PowerShell):
@@ -127,7 +127,7 @@ nssm status <service-name>
 
 ### Full pipeline (what the scheduled task runs)
 
-Polling -> sweep -> routing, in that order. Stops at the first step that fails (exit code 1). Log: `data\pipeline.log`.
+Polling -> sweep -> routing, in that order. Stops at the first step that fails (exit code 1). Log: `logs\pipeline.log`.
 
 ```powershell
 python -m middleware.pipeline                       # all three steps
@@ -177,11 +177,11 @@ python -m middleware.routing                        # then re-route
 
 ### Logs
 
-`data\pipeline.log`, `data\polling.log`, `data\sweep.log`, `data\routing.log`, `data\requeue.log`, `data\staging.log` (deletes made from the web app). Each rotates at about 5 MB and keeps 5 older copies (`pipeline.log.1`, `.2`, ...). The names, rotation size and copy count are defined once, in `common/logging_setup.py` and `common/logfiles.py` (`LOG_NAMES`); a new job calls `setup_job_logging("<name>")` and its name is added to `LOG_NAMES` so the Logs page can show it. The web app's **Logs** page (`/logs`) shows them newest-first with a warnings/errors filter; it reads the folder in `LOG_DIR` (default `data\`).
+`logs\pipeline.log`, `logs\polling.log`, `logs\sweep.log`, `logs\routing.log`, `logs\requeue.log`, `logs\staging.log` (deletes made from the web app). Each rotates at about 5 MB and keeps 5 older copies (`pipeline.log.1`, `.2`, ...). The names, rotation size and copy count are defined once, in `common/logging_setup.py` and `common/logfiles.py` (`LOG_NAMES`); a new job calls `setup_job_logging("<name>")` and its name is added to `LOG_NAMES` so the Logs page can show it. The web app's **Logs** page (`/logs`) shows them newest-first with a warnings/errors filter; it reads the folder in `LOG_DIR` (default `logs\`).
 
 ```powershell
-Get-Content data\pipeline.log -Tail 50              # last 50 lines
-Get-Content data\pipeline.log -Wait -Tail 20        # follow live
+Get-Content logs\pipeline.log -Tail 50              # last 50 lines
+Get-Content logs\pipeline.log -Wait -Tail 20        # follow live
 ```
 
 ## `.env` Configuration
@@ -203,7 +203,7 @@ DB_PASSWORD=         #
 DB_DRIVER=           # optional, default "ODBC Driver 18 for SQL Server" — must be installed on the VM
 DB_ENCRYPT=          # optional, default "yes"
 DB_TRUST_SERVER_CERT= # optional, default "yes" (internal server, self-signed cert)
-LOG_DIR=             # optional, folder the API's Logs page reads; default is the repo's data\ folder
+LOG_DIR=             # optional, folder the API's Logs page reads; default is the repo's logs\ folder
 ```
 
 ---

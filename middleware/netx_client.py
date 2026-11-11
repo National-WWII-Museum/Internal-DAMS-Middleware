@@ -142,11 +142,11 @@ IRN_PAGE_SIZE = 500
 
 
 def irn_index_is_populated(session=None, timeout=DEFAULT_TIMEOUT):
-    """Canary for unattended runs: True if NetX returns at least one asset
+    """For unattended runs: True if NetX returns at least one asset
     that has any value in the IRN attribute.
 
     A Solr outage makes getAssetsByQuery return zero results instead of an
-    error, so a zero-match is only trustworthy when this is True.
+    error.
     """
     result = call(
         "getAssetsByQuery",

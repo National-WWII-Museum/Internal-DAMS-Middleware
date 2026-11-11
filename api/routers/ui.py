@@ -14,7 +14,7 @@ from common.db import get_db
 from ..templating import templates
 
 router = APIRouter()
-# File handler is set up in api/main.py -> data\staging.log
+# File handler is set up in api/main.py -> logs\staging.log
 staging_log = logging.getLogger("api.staging")
 
 PAGE_SIZE = 50

@@ -14,11 +14,11 @@ from .routers import clips, logs, ui
 
 logger = logging.getLogger(__name__)
 
-# Webhook test payloads go to data\webhook.log (viewable on the Logs page),
+# Webhook test payloads go to logs\webhook.log (viewable on the Logs page),
 # since the API runs as a service with no console to watch.
 webhook_logger = setup_named_logger("api.webhook", "webhook")
 
-# Manual deletes from the Records page go to data\staging.log
+# Manual deletes from the Records page go to logs\staging.log
 staging_logger = setup_named_logger("api.staging", "staging")
 
 app = FastAPI(title="Records in Que")

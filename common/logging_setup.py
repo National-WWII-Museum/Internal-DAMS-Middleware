@@ -24,7 +24,7 @@ MAX_BYTES = 5_000_000  # rotate at about 5 MB; logfiles.MAX_BACKUPS copies are k
 
 
 def make_file_handler(log_name):
-    """A rotating-file handler for data/<log_name>.log, already formatted."""
+    """A rotating-file handler for logs/<log_name>.log, already formatted."""
     path = logfiles.log_path(log_name)  # also rejects names not in LOG_NAMES
     path.parent.mkdir(parents=True, exist_ok=True)
     handler = RotatingFileHandler(
