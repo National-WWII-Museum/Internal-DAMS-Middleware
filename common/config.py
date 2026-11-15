@@ -36,6 +36,7 @@ LOG_DIR = Path(os.getenv("LOG_DIR") or Path(__file__).resolve().parent.parent / 
 NETX_DB_NAME = os.getenv("NETX_DB_NAME")
 NETX_DB_USER = os.getenv("NETX_DB_USER")
 NETX_DB_PASSWORD = os.getenv("NETX_DB_PASSWORD")
+NETX_WEBHOOK_TOKEN_CLIPS = os.getenv("NETX_WEBHOOK_TOKEN_CLIPS")
 
 NETX_DB_CONNECTION_STRING = (
     f"DRIVER={{{DB_DRIVER}}};"

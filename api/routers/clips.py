@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Request
+import hmac
+
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-
+from common.config import NETX_WEBHOOK_TOKEN_CLIPS
 from common.logging_setup import setup_named_logger
 
 router = APIRouter(prefix="/api")
@@ -21,7 +23,17 @@ class NetxWebhook(BaseModel):
 
 
 @router.post("/webhooks/clips")
-async def receive_clips_webhook(payload: NetxWebhook):
+def receive_clips_webhook(payload: NetxWebhook):
+    if not NETX_WEBHOOK_TOKEN_CLIPS:
+        webhook_logger.error("NETX_WEBHOOK_TOKEN_CLIPS is not set in .env")
+        raise HTTPException(status_code=503, detail="webhook not configured")
+    
+    if not hmac.compare_digest(NETX_WEBHOOK_TOKEN_CLIPS, payload.token):
+        webhook_logger.warning(
+            "Clips webhook %s rejected: bad token", payload.event.eventId
+        )
+        raise HTTPException(status_code=401, detail="invalid token")
+    
     webhook_logger.info(
         "Clips webhook %s for assets %s",
         payload.event.eventId,
