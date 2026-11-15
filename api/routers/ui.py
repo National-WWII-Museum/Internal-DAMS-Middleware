@@ -1,5 +1,3 @@
-import csv
-import io
 import logging
 from datetime import date, datetime
 from typing import List, Optional
@@ -112,18 +110,3 @@ def delete_records(
     target = _safe_next(next)
     sep = "&" if "?" in target else "?"
     return RedirectResponse(f"{target}{sep}deleted={count}", status_code=303)
-
-
-    columns, rows = staging.get_holding_export(conn)
-    buffer = io.StringIO()
-    writer = csv.writer(buffer)
-    writer.writerow(columns)
-    for row in rows:
-        writer.writerow([_csv_cell(v) for v in row])
-    body = "\ufeff" + buffer.getvalue()
-    filename = f"holding-{date.today().isoformat()}.csv"
-    return Response(
-        content=body.encode("utf-8"),
-        media_type="text/csv; charset=utf-8",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
