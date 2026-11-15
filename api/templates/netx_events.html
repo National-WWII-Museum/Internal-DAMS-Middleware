@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_tag %}
+{% block title %}NetX events · Records in Que{% endblock %}
+{% block content %}
+<h1 class="title">NetX events</h1>
+<p class="subtitle is-6">
+  Each row is one webhook delivery from NetX (a custom action fired on one or more assets),
+  waiting to go back to EMu. Newest first.
+</p>
+
+<form method="get" action="/netx-events" class="box">
+  <div class="columns is-vcentered">
+    <div class="column is-3">
+      <div class="field">
+        <label class="label" for="status">Status</label>
+        <div class="control">
+          <div class="select is-fullwidth">
+            <select id="status" name="status">
+              <option value="">All</option>
+              {% for s in statuses %}
+              <option value="{{ s }}" {% if f.status == s %}selected{% endif %}>{{ s }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="column is-3">
+      <div class="buttons">
+        <button class="button is-link" type="submit">Apply</button>
+        <a class="button is-light" href="/netx-events">Reset</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+<p class="mb-3 has-text-grey">
+  {% if total %}Showing {{ start }}–{{ end }} of {{ total }}{% else %}0 results{% endif %}
+  · times are UTC
+</p>
+
+<div class="table-container">
+  <table class="table is-fullwidth is-striped is-hoverable">
+    <thead>
+      <tr>
+        <th>Received</th>
+        <th>Status</th>
+        <th>Type</th>
+        <th>NetX asset IDs</th>
+        <th>NetX user</th>
+        <th>Processed</th>
+        <th>Error</th>
+        <th>Event ID</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in items %}
+      <tr>
+        <td class="cell-nowrap">{{ e.received_at|dt }}</td>
+        <td>{{ status_tag(e.status) }}</td>
+        <td class="cell-nowrap">{{ e.event_type }}</td>
+        <td title="{{ e.asset_ids|join(', ') }}">
+          {{ e.asset_ids[:10]|join(', ') }}
+          {% if e.asset_ids|length > 10 %}
+          <span class="has-text-grey">+{{ e.asset_ids|length - 10 }} more</span>
+          {% endif %}
+        </td>
+        <td class="cell-nowrap">{{ e.netx_user_id if e.netx_user_id is not none else '' }}</td>
+        <td class="cell-nowrap">{{ e.processed_at|dt }}</td>
+        <td class="cell-title" title="{{ e.error or '' }}">{{ e.error or '' }}</td>
+        <td class="cell-nowrap is-family-monospace is-size-7">{{ e.event_id }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" class="has-text-centered has-text-grey py-5">No events match this filter.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<nav class="pagination is-centered" role="navigation" aria-label="pagination">
+  {% if prev_url %}<a class="pagination-previous" href="{{ prev_url }}">Previous</a>
+  {% else %}<a class="pagination-previous is-disabled" aria-disabled="true">Previous</a>{% endif %}
+  {% if next_url %}<a class="pagination-next" href="{{ next_url }}">Next</a>
+  {% else %}<a class="pagination-next is-disabled" aria-disabled="true">Next</a>{% endif %}
+  <ul class="pagination-list">
+    <li><span class="pagination-link is-current">Page {{ page }} of {{ total_pages }}</span></li>
+  </ul>
+</nav>
+{% endblock %}
