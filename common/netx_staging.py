@@ -1,7 +1,7 @@
 """
 netx_staging.py
 Reads and writes for dbo.netx_staging: one row per NetX webhook event
-(see refrence/scripts/sql/004_netx_staging.sql). The mirror of staging.py,
+(see refrence/scripts/sql/004_netx_staging.sql). The mirror of emu_staging.py,
 which does the same job for dbo.emu_staging.
 """
 
@@ -29,7 +29,7 @@ def _parse_asset_ids(text):
 
 def get_events(conn, *, status, page, page_size):
     """One page of netx_staging rows, newest first, plus the total row count
-    for the filter. Same shape as staging.get_records."""
+    for the filter. Same shape as emu_staging.get_records."""
     where, params = ("WHERE status = ?", [status]) if status else ("", [])
 
     total = conn.execute(

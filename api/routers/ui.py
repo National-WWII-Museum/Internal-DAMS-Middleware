@@ -6,7 +6,7 @@ from urllib.parse import urlencode
 from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import RedirectResponse, Response
 
-from common import staging
+from common import emu_staging
 from common.db import get_db
 
 from ..templating import templates
@@ -50,11 +50,11 @@ def records_page(
     conn=Depends(get_db),
 ):
     # The form can send blanks or odd values; normalise instead of erroring.
-    status = status if status in staging.STATUSES else None
-    sort = sort if sort in staging.SORTS else "updated"
+    status = status if status in emu_staging.STATUSES else None
+    sort = sort if sort in emu_staging.SORTS else "updated"
     q = (q or "").strip()[:100] or None
 
-    result = staging.get_records(
+    result = emu_staging.get_records(
         conn, status=status, q=q, failed=failed, sort=sort,
         page=page, page_size=PAGE_SIZE,
     )
@@ -66,7 +66,7 @@ def records_page(
         request, "records.html",
         {
             "f": {"status": status, "q": q, "failed": failed, "sort": sort},
-            "statuses": staging.STATUSES,
+            "statuses": emu_staging.STATUSES,
             "sorts": SORT_LABELS,
             "items": items,
             "total": total,
@@ -99,7 +99,7 @@ def delete_records(
     conn=Depends(get_db),
 ):
     cleaned = list(dict.fromkeys(i.strip() for i in irns if i.strip()))  # trim, de-dupe
-    count = staging.delete_records(conn, cleaned) if cleaned else 0
+    count = emu_staging.delete_records(conn, cleaned) if cleaned else 0
     client = request.client.host if request.client else "unknown"
     staging_log.warning(
         "Dashboard delete from %s: %d of %d selected row(s) removed (IRNs: %s)",
