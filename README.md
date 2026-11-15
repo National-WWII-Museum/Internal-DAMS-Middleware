@@ -19,7 +19,7 @@ C:\ww2-emu-netx\
 |   |-- emu_client.py        <- token fetch, search/filter, pagination logic
 |   |-- ...
 |
-|-- api\                     <- FastAPI app (staging web UI now; NetX/EMu webhook endpoints later)
+|-- api\                     <- FastAPI app (staging web UI; NetX/EMu webhook endpoints)
 |   |-- main.py              <- creates the app, includes the routers
 |   |-- routers\             <- one file per concern (ui.py = the records page)
 |   |-- templates\, static\  <- Jinja2 + Bulma for the web UI
@@ -29,10 +29,11 @@ C:\ww2-emu-netx\
 |   |-- db.py                <- pyodbc connection + per-request dependency
 |   |-- staging.py           <- emu_staging queries used by the web UI
 |
-|-- scripts\                 <- one-off / diagnostic scripts
-|   |-- get_schema.py
-|   |-- get_sample_records.py
-|   `-- ...
+|-- refrence\ 
+|   |-- scripts\                 <- one-off / diagnostic scripts
+|   |   |-- get_schema.py
+|   |   |-- get_sample_records.py
+|   |   `-- ...
 |
 |-- logs\                    <- generated output, not source code
 ```

@@ -13,10 +13,6 @@ from . import config
 
 logger = logging.getLogger(__name__)
 
-# fields to review
-# "data.SubLocalTerms_tab", better than WebLocalTerms_tab??
-
-
 # Fields pulled for each polled record. These feed mapping.record_to_staging_row(),
 # which maps them onto dbo.emu_staging columns - keep the two in sync.
 PLACEHOLDER_FIELDS = [
