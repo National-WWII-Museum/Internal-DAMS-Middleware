@@ -12,7 +12,7 @@ from . import emu_client
 from . import mapping
 from common.logging_setup import setup_job_logging
 
-MODULE = "ecatalogue"  # starting with just Catalogue for now
+MODULE = "ecatalogue"
 
 logger = logging.getLogger(__name__)
 
