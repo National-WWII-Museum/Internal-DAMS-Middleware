@@ -114,24 +114,12 @@ def delete_records(
     return RedirectResponse(f"{target}{sep}deleted={count}", status_code=303)
 
 
-def _csv_cell(value):
-    """Text for one CSV cell. A leading = + - @ would be run as a formula by
-    Excel, so those get a leading apostrophe."""
-    if value is None:
-        return ""
-    text = value.strftime("%Y-%m-%d %H:%M:%S") if isinstance(value, datetime) else str(value)
-    return "'" + text if text[:1] in ("=", "+", "-", "@", "\t", "\r") else text
-
-
-@router.get("/holding.csv")
-def holding_csv(conn=Depends(get_db)):
     columns, rows = staging.get_holding_export(conn)
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     writer.writerow(columns)
     for row in rows:
         writer.writerow([_csv_cell(v) for v in row])
-    # The BOM makes Excel read the file as UTF-8 (names with accents).
     body = "\ufeff" + buffer.getvalue()
     filename = f"holding-{date.today().isoformat()}.csv"
     return Response(
