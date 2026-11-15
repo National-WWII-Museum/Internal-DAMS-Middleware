@@ -94,7 +94,7 @@
       {% for r in items %}
       <tr>
         <td>
-          {# same rule as staging.DELETABLE_SQL: ready rows are DSS's, unless stuck #}
+          {# same rule as emu_staging.DELETABLE_SQL: ready rows are DSS's, unless stuck #}
           {% if r.status != 'ready' or r.sync_failed %}
           <input type="checkbox" class="row-check" name="irns" value="{{ r.irn }}" aria-label="Select record {{ r.irn }}">
           {% endif %}

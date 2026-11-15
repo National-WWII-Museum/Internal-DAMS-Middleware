@@ -27,7 +27,7 @@ C:\ww2-emu-netx\
 |-- common\                  <- code shared by middleware AND api
 |   |-- config.py            <- DB connection settings from .env
 |   |-- db.py                <- pyodbc connection + per-request dependency
-|   |-- staging.py           <- emu_staging queries used by the web UI
+|   |-- emu_staging.py       <- emu_staging queries used by the web UI
 |
 |-- refrence\ 
 |   |-- scripts\                 <- one-off / diagnostic scripts
@@ -100,7 +100,7 @@ Checks: `/health` (app is up), `/health/db` (database reachable), `/` (records t
 
 **Removing records from the queue.** On the records page, tick one or more rows and click **Remove selected**. This sends `POST /records/delete` with the selected IRNs, deletes those rows from `dbo.emu_staging`, then redirects (303) back to the same filtered page with a "Removed N records" banner.
 
-- Rows with `status = 'ready'` have no checkbox unless `sync_failed = 1`: the NetX DSS task clears finished ready rows itself. The rule lives in `DELETABLE_SQL` in `common/staging.py`; the checkbox condition in `records.html` must match it.
+- Rows with `status = 'ready'` have no checkbox unless `sync_failed = 1`: the NetX DSS task clears finished ready rows itself. The rule lives in `DELETABLE_SQL` in `common/emu_staging.py`; the checkbox condition in `records.html` must match it.
 - Deletion is permanent, and it is not a block. If the EMu record is modified again, the next poll re-stages it as `pending`.
 - Every delete is logged (IRNs and client IP) to `logs\staging.log`, shown on the **Logs** page. The page has no login, so this is the audit trail.
 - The `emusync` login needs `DELETE` on `dbo.emu_staging` (the DSS cleanup callback already uses it). Form posts need `python-multipart`, which `pip install -e .` now installs.

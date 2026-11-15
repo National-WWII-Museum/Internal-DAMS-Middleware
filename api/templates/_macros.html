@@ -1,4 +1,6 @@
 {% macro status_tag(status) -%}
-{% set colors = {'pending': 'is-info', 'ready': 'is-success', 'holding': 'is-warning', 'missing_file': 'is-dark'} %}
+{# emu_staging statuses, then netx_staging statuses #}
+{% set colors = {'pending': 'is-info', 'ready': 'is-success', 'holding': 'is-warning', 'missing_file': 'is-dark',
+                 'received': 'is-info', 'done': 'is-success', 'failed': 'is-danger'} %}
 <span class="tag {{ colors.get(status, 'is-light') }}">{{ status }}</span>
 {%- endmacro %}
