@@ -24,3 +24,24 @@ def record_event(conn, event_id, asset_ids, netx_user_id):
         # The primary key rejected it: this event_id is already in the table.
         conn.rollback()
         return False
+
+def mark_done(conn, event_id):
+    """Processing finished without an error."""
+    conn.execute(
+        "UPDATE dbo.netx_staging "
+        "SET status = 'done', error = NULL, processed_at = SYSUTCDATETIME() "
+        "WHERE event_id = ?",
+        [event_id],
+    )
+    conn.commit()
+
+
+def mark_failed(conn, event_id, error):
+    """Processing raised an error; keep the message so it can be reviewed."""
+    conn.execute(
+        "UPDATE dbo.netx_staging "
+        "SET status = 'failed', error = ?, processed_at = SYSUTCDATETIME() "
+        "WHERE event_id = ?",
+        [str(error)[:4000], event_id],
+    )
+    conn.commit()    
