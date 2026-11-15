@@ -1,8 +1,9 @@
 import hmac
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel
 
+from common import netx_staging
 from common.clip_events import process_clips_event
 from common.config import NETX_WEBHOOK_TOKEN_CLIPS
 from common.logging_setup import setup_named_logger
@@ -36,7 +37,18 @@ def receive_clips_webhook(payload: NetxWebhook, background_tasks: BackgroundTask
             "Clips webhook %s rejected: bad token", payload.event.eventId
         )
         raise HTTPException(status_code=401, detail="invalid token")
-    
+
+    is_new = netx_staging.record_event(
+        conn, payload.event.eventId, payload.event.assetIds, payload.event.userId
+    )
+
+    if not is_new:
+        webhook_logger.info(
+            "Clips webhook %s already received, skipping", payload.event.eventId
+        )
+        return {"status": "duplicate"}        
+
+
     webhook_logger.info(
         "Clips webhook %s for assets %s",
         payload.event.eventId,
