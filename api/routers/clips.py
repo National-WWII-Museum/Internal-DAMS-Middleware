@@ -1,10 +1,12 @@
 import hmac
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
+from common.clip_events import process_clips_event
 from common.config import NETX_WEBHOOK_TOKEN_CLIPS
 from common.logging_setup import setup_named_logger
+
 
 router = APIRouter(prefix="/api")
 
@@ -22,8 +24,9 @@ class NetxWebhook(BaseModel):
     token: str
 
 
+
 @router.post("/webhooks/clips")
-def receive_clips_webhook(payload: NetxWebhook):
+def receive_clips_webhook(payload: NetxWebhook, background_tasks: BackgroundTasks):
     if not NETX_WEBHOOK_TOKEN_CLIPS:
         webhook_logger.error("NETX_WEBHOOK_TOKEN_CLIPS is not set in .env")
         raise HTTPException(status_code=503, detail="webhook not configured")
@@ -38,5 +41,9 @@ def receive_clips_webhook(payload: NetxWebhook):
         "Clips webhook %s for assets %s",
         payload.event.eventId,
         payload.event.assetIds,      
+    )
+
+    background_tasks.add_task(
+        process_clips_event, payload.event.eventId, payload.event.assetIds
     )
     return {"status": "received"}

@@ -55,18 +55,18 @@ def health_db():
 
 
 # Temporary: echoes back whatever a webhook sends so we can inspect the payload.
-@app.api_route("/webhook/test", methods=["GET", "POST", "PUT", "PATCH"])
-async def webhook_test(request: Request):
-    raw = await request.body()
-    try:
-        body = await request.json()
-    except ValueError:
-        body = raw.decode("utf-8", errors="replace")
-    payload = {
-        "method": request.method,
-        "headers": dict(request.headers),
-        "query": dict(request.query_params),
-        "body": body,
-    }
-    webhook_logger.info("Webhook test received:\n%s", json.dumps(payload, indent=2, default=str))
-    return payload
+# @app.api_route("/webhook/test", methods=["GET", "POST", "PUT", "PATCH"])
+# async def webhook_test(request: Request):
+#     raw = await request.body()
+#     try:
+#         body = await request.json()
+#     except ValueError:
+#         body = raw.decode("utf-8", errors="replace")
+#     payload = {
+#         "method": request.method,
+#         "headers": dict(request.headers),
+#         "query": dict(request.query_params),
+#         "body": body,
+#     }
+#     webhook_logger.info("Webhook test received:\n%s", json.dumps(payload, indent=2, default=str))
+#     return payload
