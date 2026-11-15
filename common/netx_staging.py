@@ -9,6 +9,53 @@ import json
 
 import pyodbc
 
+STATUSES = ("received", "done", "failed")
+
+LIST_COLUMNS = (
+    "event_id, event_type, asset_ids, netx_user_id, status, error, "
+    "received_at, processed_at"
+)
+
+
+def _parse_asset_ids(text):
+    """The asset_ids column is JSON text ('[206839, 206840]'); give the page a
+    real list. Anything unreadable becomes an empty list instead of an error."""
+    try:
+        value = json.loads(text)
+    except (TypeError, ValueError):
+        return []
+    return value if isinstance(value, list) else []
+
+
+def get_events(conn, *, status, page, page_size):
+    """One page of netx_staging rows, newest first, plus the total row count
+    for the filter. Same shape as staging.get_records."""
+    where, params = ("WHERE status = ?", [status]) if status else ("", [])
+
+    total = conn.execute(
+        f"SELECT COUNT(*) FROM dbo.netx_staging {where}", params
+    ).fetchone()[0]
+
+    cur = conn.execute(
+        f"SELECT {LIST_COLUMNS} FROM dbo.netx_staging {where} "
+        "ORDER BY received_at DESC, event_id ASC "
+        "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY",
+        [*params, (page - 1) * page_size, page_size],
+    )
+    columns = [c[0] for c in cur.description]
+    items = [dict(zip(columns, row)) for row in cur.fetchall()]
+    for item in items:
+        item["asset_ids"] = _parse_asset_ids(item["asset_ids"])
+
+    return {
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "total_pages": (total + page_size - 1) // page_size,
+        "items": items,
+    }
+
+
 def record_event(conn, event_id, asset_ids, netx_user_id):
     """Insert the event. Returns True if it is new, False if NetX has
     already sent this event_id (a retry)."""
