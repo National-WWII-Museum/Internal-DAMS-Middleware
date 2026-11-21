@@ -11,7 +11,8 @@ from pathlib import Path
 
 import requests
 
-from middleware import config, emu_client
+from common import config
+from middleware import emu_client
 
 MODULE = "ecatalogue"
 IRNS = ["53935"]  

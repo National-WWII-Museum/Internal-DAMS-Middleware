@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 
-from . import config
+from common import config
 from . import state
 from . import emu_client
 from . import mapping

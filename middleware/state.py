@@ -2,7 +2,7 @@
 state.py
 Persistence for the poll watermark (dbo.sync_state) and the landing table
 (dbo.emu_staging), both in the remote MS SQL Server database - connection
-details in config.py / .env.
+details in common/config.py / .env.
 
 The schema is owned and provisioned by the DBA (see the project's SQL
 script). This module only reads and writes rows; it never creates or
@@ -12,7 +12,7 @@ from datetime import date, datetime
 
 import pyodbc
 
-from .config import DB_CONNECTION_STRING
+from common.config import DB_CONNECTION_STRING
 from .mapping import WRITE_COLUMNS
 
 # dbo.sync_state is an append-only run log: every run inserts a new row
@@ -114,7 +114,7 @@ def upsert_staging_record(conn, irn, row):
 STATUS_PENDING = "pending"   # staged, not routed yet - neither DSS task reads it
 STATUS_READY = "ready"       # NetX has an asset with this IRN
 STATUS_HOLDING = "holding"   # NetX has none yet; re-checked every run
-STATUS_MISSING_FILE = "missing_file"  # no longer set by routing; kept so rows already parked stay valid
+
 
 _STATUS_CHUNK = 500  # well under SQL Server's 2100-parameter limit
 

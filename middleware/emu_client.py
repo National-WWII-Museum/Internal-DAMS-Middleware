@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 import requests
 
-from . import config
+from common import config
 
 logger = logging.getLogger(__name__)
 

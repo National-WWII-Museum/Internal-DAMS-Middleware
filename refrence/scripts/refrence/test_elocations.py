@@ -5,7 +5,8 @@ EMu token and pulls a single record (irn, LocNwwiimOnExhibit).
 """
 import requests
 
-from middleware import config, emu_client
+from common import config
+from middleware import emu_client
 
 headers = emu_client.get_auth_headers()
 

@@ -15,7 +15,6 @@ C:\ww2-emu-netx\
 |
 |-- middleware\              <- our reusable code (a Python "package")
 |   |-- __init__.py
-|   |-- config.py            <- loads .env once; everything else imports from here
 |   |-- emu_client.py        <- token fetch, search/filter, pagination logic
 |   |-- ...
 |
@@ -25,7 +24,7 @@ C:\ww2-emu-netx\
 |   |-- templates\, static\  <- Jinja2 + Bulma for the web UI
 |
 |-- common\                  <- code shared by middleware AND api
-|   |-- config.py            <- DB connection settings from .env
+|   |-- config.py            <- loads .env once; middleware and api both import from here
 |   |-- db.py                <- pyodbc connection + per-request dependency
 |   |-- emu_staging.py       <- emu_staging queries used by the web UI
 |
@@ -42,7 +41,7 @@ C:\ww2-emu-netx\
 
 - `middleware/` is the actual product — the code that eventually runs continuously in production (the polling loop, the webhook listener).
 - `api/` is the FastAPI service: the staging viewer today (with a delete-selected action for clearing records out of the queue), and later the endpoints NetX webhooks call and the ones that return data to EMu. Add a new concern as a new file in `api/routers/` plus one `include_router` line in `api/main.py`. Keep route handlers thin; put real logic in functions they call.
-- `common/` holds what both `middleware/` and `api/` need, so the two never drift apart. `middleware/config.py` still has its own copy of the DB settings; moving it onto `common/` is a possible later cleanup.
+- `common/` holds what both `middleware/` and `api/` need, so the two never drift apart. All settings live in `common/config.py`.
 - `scripts/` all things you run manually, once in a while, to explore or diagnose something. 
 - `logs/` is output, not input — schema JSON, CSVs, logs. (Sync state lives on a SQL Server DB on a different on site VM.)
 
@@ -243,7 +242,7 @@ Content-Type: application/json
 
 **Upload workflow (new items):** files are uploaded with NetX I/O and named `<accession number>[_NNN].<ext>` (the `_NNN` suffix is for multi-image records such as books). Two things tag the new asset with its Accession Number and IRN: the on-import `valuelookup` tasks in `netx-config-files/` (accession number from the file name; IRN looked up in `emu_staging` only when exactly one record has that accession number), and `python -m middleware.sweep`, an hourly safety net that finds recently imported assets with no IRN and asks EMu directly (again only when exactly one record matches). Run the sweep without `--apply` first - it logs what it would do. Accession numbers are not unique across EMu, so ambiguous matches are logged and left untagged.
 
-**State management:** both tables live in a remote **MS SQL Server** database (`EmuStaging`), reached via `pyodbc` — `middleware/state.py`, connection built in `middleware/config.py` from the `DB_*` env vars. The schema is **owned and provisioned by the DBA**; this app only reads and writes rows (it does not create or alter tables). `middleware/mapping.WRITE_COLUMNS` and `emu_client.PLACEHOLDER_FIELDS` must stay in sync with the `emu_staging` column list.
+**State management:** both tables live in a remote **MS SQL Server** database (`EmuStaging`), reached via `pyodbc` — `middleware/state.py`, connection built in `common/config.py` from the `DB_*` env vars. The schema is **owned and provisioned by the DBA**; this app only reads and writes rows (it does not create or alter tables). `middleware/mapping.WRITE_COLUMNS` and `emu_client.PLACEHOLDER_FIELDS` must stay in sync with the `emu_staging` column list.
 
 ---
 

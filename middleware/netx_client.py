@@ -8,7 +8,7 @@ import time
 
 import requests
 
-from . import config
+from common import config
 
 logger = logging.getLogger(__name__)
 

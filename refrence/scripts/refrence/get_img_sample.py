@@ -2,7 +2,8 @@ import requests
 import json
 import time
 
-from middleware import config, emu_client
+from common import config
+from middleware import emu_client
 
 EMU_BASE_URL = config.EMU_BASE_URL
 EMU_TENANT = config.EMU_TENANT
