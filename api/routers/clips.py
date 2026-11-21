@@ -5,7 +5,7 @@ from common.db import get_db
 from pydantic import BaseModel
 
 from common import netx_staging
-from common.clip_events import process_clips_event
+from ..services.clip_events import process_clips_event
 from common.config import NETX_WEBHOOK_TOKEN_CLIPS
 from common.logging_setup import setup_named_logger
 

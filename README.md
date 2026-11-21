@@ -20,6 +20,7 @@ C:\ww2-emu-netx\
 |-- api\                     <- FastAPI app (staging web UI; NetX/EMu webhook endpoints)
 |   |-- main.py              <- creates the app, includes the routers
 |   |-- routers\             <- one file per concern (ui.py = the records page)
+|   |-- services\            <- the work behind the routes (clip_events.py = clips webhook processing)
 |   |-- templates\, static\  <- Jinja2 + Bulma for the web UI
 |
 |-- common\                  <- code shared by middleware AND api
@@ -42,7 +43,7 @@ C:\ww2-emu-netx\
 ## Why split it this way
 
 - `middleware/` is the actual product — the code that eventually runs continuously in production (the polling loop, the webhook listener).
-- `api/` is the FastAPI service: the staging viewer today (with a delete-selected action for clearing records out of the queue), and later the endpoints NetX webhooks call and the ones that return data to EMu. Add a new concern as a new file in `api/routers/` plus one `include_router` line in `api/main.py`. Keep route handlers thin; put real logic in functions they call.
+- `api/` is the FastAPI service: the staging viewer today (with a delete-selected action for clearing records out of the queue), and later the endpoints NetX webhooks call and the ones that return data to EMu. Add a new concern as a new file in `api/routers/` plus one `include_router` line in `api/main.py`. Keep route handlers thin; put real logic in .
 - `common/` holds what both `middleware/` and `api/` need, so the two never drift apart. All settings live in `common/config.py`.
 - `scripts/` all things you run manually, once in a while, to explore or diagnose something. 
 - `logs/` is output, not input — schema JSON, CSVs, logs. (Sync state lives on a SQL Server DB on a different on site VM.)
