@@ -42,7 +42,7 @@ C:\ww2-emu-netx\
 
 ## Why split it this way
 
-- `middleware/` is the actual product — the code that eventually runs continuously in production (the polling loop, the webhook listener).
+- `middleware/` is the starting point — the code that eventually runs continuously in production (the polling loop).
 - `api/` is the FastAPI service: the staging viewer today (with a delete-selected action for clearing records out of the queue), and later the endpoints NetX webhooks call and the ones that return data to EMu. Add a new concern as a new file in `api/routers/` plus one `include_router` line in `api/main.py`. Keep route handlers thin; put real logic in .
 - `common/` holds what both `middleware/` and `api/` need, so the two never drift apart. All settings live in `common/config.py`.
 - `scripts/` all things you run manually, once in a while, to explore or diagnose something. 
