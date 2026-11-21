@@ -1,13 +1,13 @@
 """
 polling_single_day.py
 Same as polling.py, but pulls just one day's worth of updates via
-emu_client.search_modified_on().
+emu_api.search_modified_on().
 """
 import logging
 from datetime import datetime, timedelta, timezone
 
 from . import state
-from . import emu_client
+from common import emu_api
 from . import mapping
 from common.logging_setup import setup_job_logging
 
@@ -40,15 +40,15 @@ def run(date=None):
         logger.info("Last sync date: %s (backfilling %s)", last_sync_date, date)
 
         # Step 1: ask EMu for everything modified on the requested day
-        records = emu_client.search_modified_on(MODULE, date)
+        records = emu_api.search_modified_on(MODULE, date)
         logger.info("Found %d record(s) modified on %s", len(records), date)
 
         # Step 2: resolve reference fields, map each record to its staging
         # row, and upsert it. One shared token for all the lookups.
         if records:
-            ref_headers = emu_client.get_auth_headers()
+            ref_headers = emu_api.get_auth_headers()
             for record in records:
-                emu_client.resolve_references(record, headers=ref_headers)
+                emu_api.resolve_references(record, headers=ref_headers)
                 row = mapping.record_to_staging_row(record)
                 state.upsert_staging_record(conn, record.get("irn"), row)
                 rows_processed += 1

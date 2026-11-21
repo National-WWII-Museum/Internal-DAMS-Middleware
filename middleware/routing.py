@@ -26,7 +26,7 @@ path.
 import logging
 import sys
 
-from . import netx_client
+from common import netx_api
 from . import state
 from common.logging_setup import setup_job_logging
 
@@ -51,18 +51,18 @@ def run():
             return {"to_ready": 0, "promoted": 0, "to_holding": 0, "still_holding": 0}
         logger.info("Routing %d row(s)", len(rows))
 
-        session = netx_client.get_session()
+        session = netx_api.get_session()
 
         # Canary: a Solr outage makes getAssetsByQuery return zero results
         # rather than an error, which would park every record as 'holding'.
         # Refuse to route at all unless NetX can still find *any* IRN.
-        if not netx_client.irn_index_is_populated(session):
+        if not netx_api.irn_index_is_populated(session):
             raise RuntimeError(
                 "NetX returned no assets with an IRN attribute - Solr/index "
                 "problem? Aborting without changing any status."
             )
 
-        found = netx_client.find_existing_irns(
+        found = netx_api.find_existing_irns(
             [irn for irn, _ in rows], session=session
         )
 

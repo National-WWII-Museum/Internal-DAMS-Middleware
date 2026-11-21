@@ -1,5 +1,5 @@
 """
-emu_client.py
+emu_api.py
 Reusable functions for talking to the EMu REST API:
 authentication, and searching with pagination.
 """
@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 import requests
 
-from common import config
+from . import config
 
 logger = logging.getLogger(__name__)
 

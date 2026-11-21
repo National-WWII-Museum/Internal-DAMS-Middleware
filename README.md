@@ -15,7 +15,6 @@ C:\ww2-emu-netx\
 |
 |-- middleware\              <- our reusable code (a Python "package")
 |   |-- __init__.py
-|   |-- emu_client.py        <- token fetch, search/filter, pagination logic
 |   |-- ...
 |
 |-- api\                     <- FastAPI app (staging web UI; NetX/EMu webhook endpoints)
@@ -25,6 +24,9 @@ C:\ww2-emu-netx\
 |
 |-- common\                  <- code shared by middleware AND api
 |   |-- config.py            <- loads .env once; middleware and api both import from here
+|   |-- emu_api.py           <- EMu REST API: token fetch, search/filter, pagination logic
+|   |-- netx_api.py          <- NetX JSON-RPC API: calls, IRN lookups, setAssetAttributes
+|   |-- netx_db.py           <- read-only SQL against the NetX database (video clips)
 |   |-- db.py                <- pyodbc connection + per-request dependency
 |   |-- emu_staging.py       <- emu_staging queries used by the web UI
 |
@@ -242,7 +244,7 @@ Content-Type: application/json
 
 **Upload workflow (new items):** files are uploaded with NetX I/O and named `<accession number>[_NNN].<ext>` (the `_NNN` suffix is for multi-image records such as books). Two things tag the new asset with its Accession Number and IRN: the on-import `valuelookup` tasks in `netx-config-files/` (accession number from the file name; IRN looked up in `emu_staging` only when exactly one record has that accession number), and `python -m middleware.sweep`, an hourly safety net that finds recently imported assets with no IRN and asks EMu directly (again only when exactly one record matches). Run the sweep without `--apply` first - it logs what it would do. Accession numbers are not unique across EMu, so ambiguous matches are logged and left untagged.
 
-**State management:** both tables live in a remote **MS SQL Server** database (`EmuStaging`), reached via `pyodbc` — `middleware/state.py`, connection built in `common/config.py` from the `DB_*` env vars. The schema is **owned and provisioned by the DBA**; this app only reads and writes rows (it does not create or alter tables). `middleware/mapping.WRITE_COLUMNS` and `emu_client.PLACEHOLDER_FIELDS` must stay in sync with the `emu_staging` column list.
+**State management:** both tables live in a remote **MS SQL Server** database (`EmuStaging`), reached via `pyodbc` — `middleware/state.py`, connection built in `common/config.py` from the `DB_*` env vars. The schema is **owned and provisioned by the DBA**; this app only reads and writes rows (it does not create or alter tables). `middleware/mapping.WRITE_COLUMNS` and `common/emu_api.PLACEHOLDER_FIELDS` must stay in sync with the `emu_staging` column list.
 
 ---
 

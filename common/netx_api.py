@@ -1,5 +1,5 @@
 """
-netx_client.py
+netx_api.py
 Reusable functions for talking to the NetX JSON-RPC API:
 authentication, making a call, and looking assets up by EMu IRN.
 """
@@ -8,7 +8,7 @@ import time
 
 import requests
 
-from common import config
+from . import config
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class NetXAPIError(Exception):
     or returns a JSON-RPC error.
 
     Wraps the underlying requests exception so callers get one exception type
-    to catch and log, same as emu_client.EMuAPIError.
+    to catch and log, same as emu_api.EMuAPIError.
     """
 
 

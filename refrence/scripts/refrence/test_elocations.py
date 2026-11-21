@@ -6,9 +6,9 @@ EMu token and pulls a single record (irn, LocNwwiimOnExhibit).
 import requests
 
 from common import config
-from middleware import emu_client
+from common import emu_api
 
-headers = emu_client.get_auth_headers()
+headers = emu_api.get_auth_headers()
 
 resp = requests.get(
     f"{config.EMU_BASE_URL}/{config.EMU_TENANT}/elocations",
