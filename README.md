@@ -43,7 +43,7 @@ C:\ww2-emu-netx\
 ## Why split it this way
 
 - `middleware/` is the starting point — the code that eventually runs continuously in production (the polling loop).
-- `api/` is the FastAPI service: the staging viewer today (with a delete-selected action for clearing records out of the queue), and later the endpoints NetX webhooks call and the ones that return data to EMu. Add a new concern as a new file in `api/routers/` plus one `include_router` line in `api/main.py`. Keep route handlers thin; put real logic in .
+- `api/` is the FastAPI service: the staging viewer (dashboard) and the endpoints NetX webhooks call and the ones that return data to EMu.
 - `common/` holds what both `middleware/` and `api/` need, so the two never drift apart. All settings live in `common/config.py`.
 - `scripts/` all things you run manually, once in a while, to explore or diagnose something. 
 - `logs/` is output, not input — schema JSON, CSVs, logs. (Sync state lives on a SQL Server DB on a different on site VM.)
@@ -98,7 +98,7 @@ python -m uvicorn api.main:app --host 0.0.0.0 --port 8000
 python -m uvicorn api.main:app --reload
 ```
 
-Checks: `/health` (app is up), `/health/db` (database reachable), `/` (records table), `/holding.csv` (CSV download), `/logs` (middleware logs, with a warnings/errors filter).
+Checks: `/health` (app is up), `/health/db` (database reachable), `/` (records table), `/logs` (middleware logs, with a warnings/errors filter).
 
 **Removing records from the queue.** On the records page, tick one or more rows and click **Remove selected**. This sends `POST /records/delete` with the selected IRNs, deletes those rows from `dbo.emu_staging`, then redirects (303) back to the same filtered page with a "Removed N records" banner.
 
