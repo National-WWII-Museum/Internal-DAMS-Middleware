@@ -1,6 +1,6 @@
 """
 mapping.py
-Turn a normalized EMu ecatalogue record (as returned by emu_client, with
+Turn a normalized EMu ecatalogue record (as returned by emu_api, with
 references already resolved) into a dict of dbo.emu_staging column values.
 
 Rules (see project notes / schema comments):
@@ -170,7 +170,7 @@ def _extract_modified(record):
 
 def _first_ref(record, ref_field):
     """First resolved entry of a *Ref / *Ref_tab field (a dict), or None.
-    ref_field must be in emu_client.REFERENCE_FIELD_MAP so that
+    ref_field must be in emu_api.REFERENCE_FIELD_MAP so that
     resolve_references has swapped the stub for the linked record's fields."""
     ref = record.get(ref_field)
     if isinstance(ref, list):
@@ -187,7 +187,7 @@ def _ref_value(record, ref_field, field):
 
 def _extract_geography(record):
     """(latitude, longitude, geo_hierarchy) from SubGeographyRef_tab, which
-    emu_client.resolve_references  resolves this.
+    emu_api.resolve_references  resolves this.
     Uses the first reference if EMu returns several;"""
     ref = _first_ref(record, "SubGeographyRef_tab")
     if ref is None:
@@ -201,7 +201,7 @@ def _extract_geography(record):
 
 def _extract_file_name(record):
     """MulIdentifier off the first MulMultiMediaRef_tab entry, which
-    emu_client.resolve_references has resolved into the emultimedia record.
+    emu_api.resolve_references has resolved into the emultimedia record.
     Uses the first linked asset if a record has several. The full filename
     including extension is kept (e.g. '2019.123.4_001.jpg')."""
     return _ref_value(record, "MulMultiMediaRef_tab", "MulIdentifier")

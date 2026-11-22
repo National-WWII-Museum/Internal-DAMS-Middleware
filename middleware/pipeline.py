@@ -56,15 +56,16 @@ def run(days=sweep.DEFAULT_DAYS, skip_polling=False, from_date=None, to_date=Non
     fixed-window poll that leaves the watermark alone.
     """
     if skip_polling:
-        pass
+        logger.info("Skipping polling (--skip-polling)")
     elif from_date:
         end = to_date or from_date
         _step(f"polling {from_date}..{end}",
               lambda: polling_date_range.run(from_date, end, update_watermark=False))
     else:
         _step("polling", polling.run)
-        _step("sweep", lambda: sweep.run(days=days, apply=True))
-        _step("routing", routing.run)
+
+    _step("sweep", lambda: sweep.run(days=days, apply=True))
+    _step("routing", routing.run)
 
 
 

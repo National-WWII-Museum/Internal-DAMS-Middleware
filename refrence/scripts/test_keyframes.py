@@ -16,7 +16,7 @@ import json
 import sys
 import time
 
-from middleware import netx_client
+from common import netx_api
 
 VIDEO_EXTENSIONS = (".mp4", ".mov", ".m4v", ".avi", ".mxf", ".mpg", ".mpeg", ".wmv", ".mkv", ".webm")
 PAGE_SIZE = 100
@@ -39,7 +39,7 @@ def get_keyframes(asset_id, session):
     keyframes = []
     start = 0
     while True:
-        result = netx_client.call(
+        result = netx_api.call(
             "getKeyframesByAsset",
             [asset_id, {"page": {"startIndex": start, "size": PAGE_SIZE}}],
             session=session,
@@ -59,7 +59,7 @@ def find_recent_video(days, session):
     since_ms = int((time.time() - days * 86400) * 1000)
     start = 0
     while True:
-        result = netx_client.call(
+        result = netx_api.call(
             "getAssetsByQuery",
             [
                 {"query": [{"operator": "and", "range": {
@@ -75,7 +75,7 @@ def find_recent_video(days, session):
         )
         page = result.get("results", [])
         for asset in page:
-            name = netx_client.get_asset_filename(asset)
+            name = netx_api.get_asset_filename(asset)
             if name.lower().endswith(VIDEO_EXTENSIONS):
                 return asset["id"], name
         if len(page) < PAGE_SIZE:
@@ -94,10 +94,10 @@ def main():
     if args.asset_id is None and not args.find:
         parser.error("give an asset ID, or use --find")
 
-    session = netx_client.get_session()
+    session = netx_api.get_session()
 
     # 1. Auth / connectivity (getSelf is a documented no-arg-ish call)
-    me = netx_client.call("getSelf", [None], session=session)
+    me = netx_api.call("getSelf", [None], session=session)
     print("Auth OK. getSelf ->", json.dumps(me, default=str)[:300])
 
     # 2. Pick the asset

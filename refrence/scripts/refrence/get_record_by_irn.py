@@ -11,7 +11,8 @@ from pathlib import Path
 
 import requests
 
-from middleware import config, emu_client
+from common import config
+from common import emu_api
 
 MODULE = "ecatalogue"
 IRNS = ["53935"]  
@@ -19,7 +20,7 @@ IRNS = ["53935"]
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "data" / "record_lookups"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-headers = emu_client.get_auth_headers()
+headers = emu_api.get_auth_headers()
 
 for irn in IRNS:
     resp = requests.get(
@@ -34,7 +35,7 @@ for irn in IRNS:
     resp.raise_for_status()
 
     record = resp.json().get("data", {})
-    record["irn"] = emu_client.extract_irn(record)
+    record["irn"] = emu_api.extract_irn(record)
 
     output_path = OUTPUT_DIR / f"{MODULE}_{irn}.json"
     output_path.write_text(json.dumps(record, indent=2))

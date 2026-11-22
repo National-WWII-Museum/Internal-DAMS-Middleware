@@ -10,9 +10,9 @@ from datetime import datetime, timedelta, timezone
 
 import requests
 
-from . import config
+from common import config
 from . import state
-from . import emu_client
+from common import emu_api
 from . import mapping
 from common.logging_setup import setup_job_logging
 
@@ -26,17 +26,17 @@ def search_modified_between(module, start_date, end_date, fields=None, page_size
     Search an EMu module for records with AdmDateModified between start_date
     and end_date ("YYYY-MM-DD", both inclusive), paging through all results.
 
-    Same return shape as emu_client.search_modified_on().
+    Same return shape as emu_api.search_modified_on().
     """
     if fields is None:
-        fields = emu_client.PLACEHOLDER_FIELDS
+        fields = emu_api.PLACEHOLDER_FIELDS
 
     # end_date is inclusive, so the exclusive upper bound is the day after it
     day_after_end = (
         datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
     ).strftime("%Y-%m-%d")
 
-    headers = emu_client.get_auth_headers(timeout=timeout)
+    headers = emu_api.get_auth_headers(timeout=timeout)
     select_str = ",".join(fields) if fields else None
 
     filter_query = {
@@ -50,7 +50,7 @@ def search_modified_between(module, start_date, end_date, fields=None, page_size
                     }
                 }
             },
-            emu_client.record_type_filter(),
+            emu_api.record_type_filter(),
         ]
     }
 
@@ -83,11 +83,11 @@ def search_modified_between(module, start_date, end_date, fields=None, page_size
             resp.raise_for_status()
             data = resp.json()
         except requests.exceptions.RequestException as e:
-            raise emu_client.EMuAPIError(
+            raise emu_api.EMuAPIError(
                 f"EMu search failed for module '{module}' on page {page_num}: {e}"
             ) from e
         except ValueError as e:
-            raise emu_client.EMuAPIError(
+            raise emu_api.EMuAPIError(
                 f"EMu returned an unparseable response for module '{module}' "
                 f"on page {page_num}: {e}"
             ) from e
@@ -96,7 +96,7 @@ def search_modified_between(module, start_date, end_date, fields=None, page_size
 
         for m in matches:
             record_data = m.get("data", {})
-            record_data["irn"] = emu_client.extract_irn(record_data)
+            record_data["irn"] = emu_api.extract_irn(record_data)
             all_records.append(record_data)
 
         logger.debug("Fetched page %d for %s: %d record(s)", page_num, module, len(matches))
@@ -138,9 +138,9 @@ def run(start_date, end_date, update_watermark=True):
         # Step 2: resolve reference fields, map each record to its staging
         # row, and upsert it. One shared token for all the lookups.
         if records:
-            ref_headers = emu_client.get_auth_headers()
+            ref_headers = emu_api.get_auth_headers()
             for record in records:
-                emu_client.resolve_references(record, headers=ref_headers)
+                emu_api.resolve_references(record, headers=ref_headers)
                 row = mapping.record_to_staging_row(record)
                 state.upsert_staging_record(conn, record.get("irn"), row)
                 rows_processed += 1

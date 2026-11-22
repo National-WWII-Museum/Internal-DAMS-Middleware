@@ -33,8 +33,8 @@ import logging
 import os
 import sys
 
-from . import emu_client
-from . import netx_client
+from common import emu_api
+from common import netx_api
 from common.logging_setup import setup_job_logging
 
 logger = logging.getLogger(__name__)
@@ -63,7 +63,7 @@ def basename_of(asset):
 
 def accession_attribute_of(asset):
     """The asset's Accession Number attribute value ('' if unset)."""
-    values = (asset.get("attributes") or {}).get(netx_client.ACCESSION_ATTRIBUTE) or []
+    values = (asset.get("attributes") or {}).get(netx_api.ACCESSION_ATTRIBUTE) or []
     if not isinstance(values, list):
         values = [values]
     for value in values:
@@ -74,16 +74,16 @@ def accession_attribute_of(asset):
 
 def run(days=DEFAULT_DAYS, apply=False):
     """Sweep recent IRN-less assets. Returns a dict of counts."""
-    session = netx_client.get_session()
+    session = netx_api.get_session()
 
     # A Solr outage makes the search return zero results, not an error.
-    if not netx_client.irn_index_is_populated(session):
+    if not netx_api.irn_index_is_populated(session):
         raise RuntimeError(
             "NetX returned no assets with an IRN attribute - Solr/index "
             "problem? Aborting the sweep."
         )
 
-    assets = netx_client.find_recent_assets_without_irn(days, session=session)
+    assets = netx_api.find_recent_assets_without_irn(days, session=session)
     counts = {
         "checked": len(assets), "tagged": 0, "no_emu_record": 0,
         "ambiguous": 0, "no_accession": 0, "errors": 0,
@@ -95,7 +95,7 @@ def run(days=DEFAULT_DAYS, apply=False):
     if not assets:
         return counts
 
-    emu_headers = emu_client.get_auth_headers()
+    emu_headers = emu_api.get_auth_headers()
     lookups = {}  # accession -> sorted list of IRNs
 
     for asset in assets:
@@ -113,7 +113,7 @@ def run(days=DEFAULT_DAYS, apply=False):
 
         if accession not in lookups:
             lookups[accession] = sorted(
-                set(emu_client.find_irns_by_accession(accession, headers=emu_headers))
+                set(emu_api.find_irns_by_accession(accession, headers=emu_headers))
             )
         irns = lookups[accession]
 
@@ -130,12 +130,12 @@ def run(days=DEFAULT_DAYS, apply=False):
             irn = irns[0]
             if apply:
                 try:
-                    netx_client.set_asset_attributes(
+                    netx_api.set_asset_attributes(
                         asset_id,
                         {"IRN": [irn], "Accession Number": [accession]},
                         session=session,
                     )
-                except netx_client.NetXAPIError:
+                except netx_api.NetXAPIError:
                     counts["errors"] += 1
                     logger.exception("Asset %s: failed to set IRN %s", asset_id, irn)
                     continue

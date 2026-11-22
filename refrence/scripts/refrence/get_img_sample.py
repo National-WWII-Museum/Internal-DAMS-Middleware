@@ -2,13 +2,14 @@ import requests
 import json
 import time
 
-from middleware import config, emu_client
+from common import config
+from common import emu_api
 
 EMU_BASE_URL = config.EMU_BASE_URL
 EMU_TENANT = config.EMU_TENANT
 
 # --- Step 1: get a fresh token ---
-headers = emu_client.get_auth_headers()
+headers = emu_api.get_auth_headers()
 
 # --- Step 2: targeted search for just one image record, long timeout ---
 filter_query = {

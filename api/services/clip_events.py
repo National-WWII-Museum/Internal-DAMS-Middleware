@@ -1,7 +1,7 @@
 import logging
 
-from . import netx_db, netx_staging
-from .db import get_connection
+from common import netx_db, netx_staging
+from common.db import get_connection
 
 webhook_logger = logging.getLogger("api.webhook")
 

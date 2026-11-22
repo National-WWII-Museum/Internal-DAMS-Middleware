@@ -28,7 +28,7 @@ import sys
 
 import pyodbc
 
-from middleware import config
+from common import config
 
 CLIP_TYPE = 4
 
